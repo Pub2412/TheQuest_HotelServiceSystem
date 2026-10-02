@@ -13,10 +13,11 @@ Login and Register page
 
 Admin page
 - Only accessible to the user with the role admin, otherwise redirect the user to a 403 error page
-- View total revenue, total running costs, total guests with graphs
+- View total revenue, total running costs (utilities and goods stocks), total guests with graphs
 -- Can generate reports through pdf
 - View what rooms are occupied through hotel map
 - Can see customer transactions and customer duration of stay, has summary on which customer is almost overdue or overdued, alerts is cusotmer is near overdue or is already overdue
+- Can check or edit utilities and restock goods
 - User (admin, cashier, staff) CRUD (with images) and Customer RUD
 - Can announce through employee bulletin
 - Employee inbox with phonenumber, call user and employee name
