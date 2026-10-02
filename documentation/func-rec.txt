@@ -4,7 +4,7 @@ Functional Requirements
 Desktop Application
 - use tkinter for gui
 
-Mobile Application
+Mobile Application (optional)
 - use flask 
 
 Login and Register page
