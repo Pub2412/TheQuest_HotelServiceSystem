@@ -10,6 +10,8 @@ Mobile Application (optional)
 Backend
 NoSql or SQLlite (Database)
 
+
+
 The Quest Main Application (Desktop) (Mobile Port (Optional))
 
 Login and Register page
@@ -45,6 +47,8 @@ Cashier page
 Staff page
 - Only accessible to the user with the role staff [Kitchen, Logistics and Utilities], otherwise redirect the user to a 403 error page
 
+
+
 Customer Application (Mobile) (Optional)
 
 Login view
@@ -75,6 +79,8 @@ Loyalty Rewards view
 
 About view
 - Shows a comprehensive content about the hotel and its offers
+
+
 
 Others 
 - Will constantly create a system log in .txt for logins and logouts encrypted on bcript and decrypted in the system, only admin can see
