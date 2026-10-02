@@ -7,6 +7,8 @@ Desktop Application
 Mobile Application (optional)
 - use flask 
 
+The Quest Main Application (Desktop) (Mobile Port (Optional))
+
 Login and Register page
 - User can login and will be directed by their role [Admin, Cashier, Staff]
 - User will be locked out of the system for one (1) minute every three (3) unsuccessful tries
@@ -18,12 +20,13 @@ Admin page
 - View what rooms are occupied through hotel map
 - Can see customer transactions and customer duration of stay, has summary on which customer is almost overdue or overdued, alerts is cusotmer is near overdue or is already overdue
 - Can check or edit utilities and restock goods
-- User (admin, cashier, staff) CRUD (with images) and Customer RUD
+- User (admin, cashier, staff) CRUD (with images) and Customer (with loyalty points) RUD
+- Can edit the promotional attainments for loyalty points from the customer
 - Can announce through employee bulletin
 - Employee inbox with phonenumber, call user and employee name
 - Can send messages through the employee inbox to other staffs specifically on Kitchen, Logistics, Utilities, Cashiers
 - Can call through call user button
-- Can see customer logs
+- Can see login/logout logs
 
 Cashier page
 - Only accessible to the user with the role cashier, otherwise redirect the user to a 403 error page
@@ -39,7 +42,14 @@ Cashier page
 Staff page
 - Only accessible to the user with the role staff [Kitchen, Logistics and Utilities], otherwise redirect the user to a 403 error page
 
-Customer page
+Customer Application (Mobile) (Optional)
+- Has login, register and forgot password
+- Can make reservation
+- Can see how many time left on their stay duration (if checked in)
+- Can extend stay with payment (if checked in)
+- Can call service, ask questions on the desk etc. (if checked in)
+- Can buy food service (if checked in)
+- Has loyalty rewards from loyalty points
 
 Others 
 - Will constantly create a system log in .txt for logins and logouts encrypted on bcript and decrypted in the system, only admin can see
