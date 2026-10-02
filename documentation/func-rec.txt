@@ -53,7 +53,7 @@ Customer Application (Mobile) (Optional)
 - Can extend stay with payment (if checked in)
 - Can call service, ask questions on the desk etc. (if checked in)
 - Can buy food service (if checked in)
-- Has loyalty rewards from loyalty points
+- Can redeem loyalty rewards from loyalty points
 
 Others 
 - Will constantly create a system log in .txt for logins and logouts encrypted on bcript and decrypted in the system, only admin can see
