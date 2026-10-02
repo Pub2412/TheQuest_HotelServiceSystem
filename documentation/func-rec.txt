@@ -7,6 +7,9 @@ Desktop Application
 Mobile Application (optional)
 - use flask 
 
+Backend
+NoSql or SQLlite (Database)
+
 The Quest Main Application (Desktop) (Mobile Port (Optional))
 
 Login and Register page
