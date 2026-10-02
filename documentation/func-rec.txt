@@ -1,0 +1,45 @@
+The Quest - A Python Hotel Management System
+Functional Requirements
+
+Desktop Application
+- use tkinter for gui
+
+Mobile Application
+- use flask 
+
+Login and Register page
+- User can login and will be directed by their role [Admin, Cashier, Staff]
+- User will be locked out of the system for one (1) minute every three (3) unsuccessful tries
+
+Admin page
+- Only accessible to the user with the role admin, otherwise redirect the user to a 403 error page
+- View total revenue, total running costs, total guests with graphs
+-- Can generate reports through pdf
+- View what rooms are occupied through hotel map
+- Can see customer transactions and customer duration of stay, has summary on which customer is almost overdue or overdued, alerts is cusotmer is near overdue or is already overdue
+- User (admin, cashier, staff) CRUD (with images) and Customer RUD
+- Can announce through employee bulletin
+- Employee inbox with phonenumber, call user and employee name
+- Can send messages through the employee inbox to other staffs specifically on Kitchen, Logistics, Utilities, Cashiers
+- Can call through call user button
+- Can see customer logs
+
+Cashier page
+- Only accessible to the user with the role cashier, otherwise redirect the user to a 403 error page
+- View existing customers
+- View existing reservations of the customers
+- View what rooms are occupied through hotel map
+-- Customer Reservation CRUD
+- Can view employee bulletin
+- Employee inbox with phonenumber, call user and employee name
+- Can send messages through the employee inbox to other staffs specifically on Kitchen, Logistics, Utilities, Fellow Cashiers and Admin
+- Can call through call user button
+
+Staff page
+- Only accessible to the user with the role staff [Kitchen, Logistics and Utilities], otherwise redirect the user to a 403 error page
+
+Customer page
+
+Others 
+- Will constantly create a system log in .txt for logins and logouts encrypted on bcript and decrypted in the system, only admin can see
+- Will constantly create a system log in txt for system health, no encryption
