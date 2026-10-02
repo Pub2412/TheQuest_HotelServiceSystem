@@ -43,7 +43,8 @@ Staff page
 - Only accessible to the user with the role staff [Kitchen, Logistics and Utilities], otherwise redirect the user to a 403 error page
 
 Customer Application (Mobile) (Optional)
-- Has login, register and forgot password
+- Has login, register and forgot password (can login through google or facebook or mobile number or email)
+- Profile RUD, can connect google, facebook or mobile number or email
 - Can make reservation
 - Can see how many time left on their stay duration (if checked in)
 - Can extend stay with payment (if checked in)
