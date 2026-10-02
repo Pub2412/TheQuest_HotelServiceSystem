@@ -46,14 +46,35 @@ Staff page
 - Only accessible to the user with the role staff [Kitchen, Logistics and Utilities], otherwise redirect the user to a 403 error page
 
 Customer Application (Mobile) (Optional)
+
+Login view
 - Has login, register and forgot password (can login through google or facebook or mobile number or email)
-- Profile RUD, can connect google, facebook or mobile number or email
-- Can make reservation
+
+Home view
+- Icons to direct to Profile, make reservation, ask questions, request service, loyalty rewards and about
+- Home page changes to show duration of stay if customer is checked in
 - Can see how many time left on their stay duration (if checked in)
+- ask questions, request service will be disabled and hidden if customer is not checked out yet
+- make reservation will be changed to extend reservation if checked in
+
+Profile view
+- Profile RUD, can connect google, facebook or mobile number or email
+
+Make reservation / Extend reservation view
+- Can make reservation
 - Can extend stay with payment (if checked in)
+
+Ask Questions view
 - Can call service, ask questions on the desk etc. (if checked in)
-- Can buy food service (if checked in)
+
+Request Service view
+- Can buy food or any service (if checked in)
+
+Loyalty Rewards view
 - Can redeem loyalty rewards from loyalty points
+
+About view
+- Shows a comprehensive content about the hotel and its offers
 
 Others 
 - Will constantly create a system log in .txt for logins and logouts encrypted on bcript and decrypted in the system, only admin can see
