@@ -7,7 +7,7 @@ root = tk.Tk()
 root.title("Login Page")
 
 # Set the size of the window
-root.geometry("300x200")
+root.geometry("1920x1080")
 
 label = tk.Label(root, text="Welcome to The Quest Company")
 label.place(x = 110, y = 40)
