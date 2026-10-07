@@ -1,0 +1,87 @@
+The Quest - A Python Hotel Management System
+Functional Requirements
+
+Desktop Application
+- use tkinter for gui
+
+Mobile Application (optional)
+- use flask 
+
+Backend
+NoSql or SQLlite (Database)
+
+
+
+The Quest Main Application (Desktop) (Mobile Port (Optional))
+
+Login and Register page
+- User can login and will be directed by their role [Admin, Cashier, Staff]
+- User will be locked out of the system for one (1) minute every three (3) unsuccessful tries
+
+Admin page
+- Only accessible to the user with the role admin, otherwise redirect the user to a 403 error page
+- View total revenue, total running costs (utilities and goods stocks), total guests with graphs
+-- Can generate reports through pdf
+- View what rooms are occupied through hotel map
+- Can see customer transactions and customer duration of stay, has summary on which customer is almost overdue or overdued, alerts is cusotmer is near overdue or is already overdue
+- Can check or edit utilities and restock goods
+- User (admin, cashier, staff) CRUD (with images) and Customer (with loyalty points) RUD
+- Can edit the promotional attainments for loyalty points from the customer
+- Can announce through employee bulletin
+- Employee inbox with phonenumber, call user and employee name
+- Can send messages through the employee inbox to other staffs specifically on Kitchen, Logistics, Utilities, Cashiers
+- Can call through call user button
+- Can see login/logout logs
+
+Cashier page
+- Only accessible to the user with the role cashier, otherwise redirect the user to a 403 error page
+- View existing customers
+- View existing reservations of the customers
+- View what rooms are occupied through hotel map
+-- Customer Reservation CRUD
+- Can view employee bulletin
+- Employee inbox with phonenumber, call user and employee name
+- Can send messages through the employee inbox to other staffs specifically on Kitchen, Logistics, Utilities, Fellow Cashiers and Admin
+- Can call through call user button
+
+Staff page
+- Only accessible to the user with the role staff [Kitchen, Logistics and Utilities], otherwise redirect the user to a 403 error page
+
+
+
+Customer Application (Mobile) (Optional)
+
+Login view
+- Has login, register and forgot password (can login through google or facebook or mobile number or email)
+
+Home view
+- Icons to direct to Profile, make reservation, ask questions, request service, loyalty rewards and about
+- Home page changes to show duration of stay if customer is checked in
+- Can see how many time left on their stay duration (if checked in)
+- ask questions, request service will be disabled and hidden if customer is not checked out yet
+- make reservation will be changed to extend reservation if checked in
+
+Profile view
+- Profile RUD, can connect google, facebook or mobile number or email
+
+Make reservation / Extend reservation view
+- Can make reservation
+- Can extend stay with payment (if checked in)
+
+Ask Questions view
+- Can call service, ask questions on the desk etc. (if checked in)
+
+Request Service view
+- Can buy food or any service (if checked in)
+
+Loyalty Rewards view
+- Can redeem loyalty rewards from loyalty points
+
+About view
+- Shows a comprehensive content about the hotel and its offers
+
+
+
+Others 
+- Will constantly create a system log in .txt for logins and logouts encrypted on bcript and decrypted in the system, only admin can see
+- Will constantly create a system log in txt for system health, no encryption
