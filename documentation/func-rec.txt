@@ -8,7 +8,7 @@ Mobile Application (optional)
 - use flask 
 
 Backend
-NoSql or SQLlite (Database)
+SQLlite (Database)
 
 
 
@@ -46,8 +46,13 @@ Cashier page
 
 Staff page
 - Only accessible to the user with the role staff [Kitchen, Logistics and Utilities], otherwise redirect the user to a 403 error page
-
-
+- Kitchen tab shows the inventory of the ingredients and sends an notification to an kitchen user if the ingredients are already low
+-- Kitchen tab can also check customer orders in hotel rooms, can request button for room service to pickup food and deliver the food, can update if food order is complete.
+- Logistics tab shows what deliveries is "Will be Shipped", "On the Way", and "Near Receive", user can update if the shipment is canceled or completed with a code specifically for logistics personnel only.
+- Utilities shows what rooms are needed of room service and food delivery (room service needs a "full swing" of the rooms per day)
+-- Utilities can update if the tasks are complete, processing or canceled.
+-- utitiltiies cannot see rooms if empty (no one checked in)
+-- these can be view in a hotel map view
 
 Customer Application (Desktop (Website Development)) (Mobile Application (Optional))
 
