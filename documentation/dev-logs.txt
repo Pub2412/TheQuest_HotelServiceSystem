@@ -1,3 +1,9 @@
 02/10/2206
 Created Repository
 Created Workspace
+
+12/10/2026
+Added Desktop App Pages Structure 
+Added Login Page
+Added Register Page
+Added Database (run db.py) (download SQLite Viewer extension here on VS Code)
