@@ -37,7 +37,9 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\Lancelot\Documents\School Files\Y3T1\ITElective1\Projects\FinalProject_Hotel_Service\TheQuest_Company_DesktopApp\.venv"
+# Resolve the virtual environment from this script so it works after the
+# project is moved to another directory or computer.
+VIRTUAL_ENV="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")/.." && pwd)"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

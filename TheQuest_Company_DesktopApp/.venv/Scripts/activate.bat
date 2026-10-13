@@ -8,7 +8,9 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\Users\Lancelot\Documents\School Files\Y3T1\ITElective1\Projects\FinalProject_Hotel_Service\TheQuest_Company_DesktopApp\.venv
+rem Resolve the virtual environment from this script so it works after the
+rem project is moved to another directory or computer.
+for %%i in ("%~dp0..") do set "VIRTUAL_ENV=%%~fi"
 
 if not defined PROMPT set PROMPT=$P$G
 
