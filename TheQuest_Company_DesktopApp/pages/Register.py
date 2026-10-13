@@ -5,7 +5,10 @@ import hashlib
 import secrets
 import hmac
 import re
+import sys
+from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from database.db import get_connection
 
 
@@ -127,7 +130,7 @@ class RegisterPage(tk.Frame):
             with get_connection() as connection:
                 connection.execute("""
                     INSERT INTO users
-                        (username, password_hash, full_name, email, role)
+                        (username, password_hash, name, email, role)
                     VALUES (?, ?, ?, ?, 'user')
                 """, (username, password_hash, full_name, email))
 

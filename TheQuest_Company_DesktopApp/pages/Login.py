@@ -3,7 +3,10 @@ import tkinter as tk
 from tkinter import messagebox
 import hashlib
 import hmac
+import sys
+from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from database.db import get_connection
 
 
@@ -95,7 +98,8 @@ class LoginPage(tk.Frame):
 
         with get_connection() as connection:
             account = connection.execute("""
-                SELECT user_id, username, password_hash, full_name, role
+                SELECT id AS user_id, username, password_hash,
+                       name AS full_name, role
                 FROM users
                 WHERE username = ? AND is_active = 1
             """, (username,)).fetchone()
