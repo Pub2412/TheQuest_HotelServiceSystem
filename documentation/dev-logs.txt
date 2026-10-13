@@ -7,3 +7,8 @@ Added Desktop App Pages Structure
 Added Login Page
 Added Register Page
 Added Database (run db.py) (download SQLite Viewer extension here on VS Code)
+
+13/10/2026
+Made assets central directory
+Fixated Database
+To inquire for database please contact me
