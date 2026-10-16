@@ -3,11 +3,11 @@ import tkinter as tk
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from database.db import initialize_database
-from Login import LoginPage
-from Register import RegisterPage
+from pages.Login import LoginPage
+from pages.Register import RegisterPage
 
 
 class HotelApp(tk.Tk):
