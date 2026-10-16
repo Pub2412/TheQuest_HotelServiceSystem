@@ -1,0 +1,352 @@
+THE QUEST HOTEL
+FOOD MENU
+===============
+
+All prices are in PHP. Menu items are active by default.
+Ingredient quantities are consumed per serving.
+
+APPETIZERS
+----------
+
+01. GARLIC BUTTER SHRIMP
+    Description: Sauteed shrimp with garlic butter, parsley, and toasted
+    bread.
+    Price: PHP 345.00
+    Category: Appetizer
+    Image: assets/imgs/foodmenu/garlic_butter_shrimp.jpg
+    Ingredients:
+      - shrimp: 180 g
+      - butter: 25 g
+      - garlic: 10 g
+      - parsley: 5 g
+      - bread: 2 slices
+
+02. CRISPY CALAMARI
+    Description: Lightly seasoned fried squid served with lemon aioli and
+    house sweet chili sauce.
+    Price: PHP 295.00
+    Category: Appetizer
+    Image: assets/imgs/foodmenu/crispy_calamari.jpg
+    Ingredients:
+      - squid: 180 g
+      - flour: 50 g
+      - lemon_aioli: 40 ml
+      - sweet_chili_sauce: 30 ml
+      - cooking_oil: 25 ml
+
+03. LUMPIA SPRING ROLLS
+    Description: Crisp Filipino spring rolls filled with seasoned pork,
+    vegetables, and served with vinegar dip.
+    Price: PHP 225.00
+    Category: Appetizer
+    Image: assets/imgs/foodmenu/lumpia_spring_rolls.jpg
+    Ingredients:
+      - ground_pork: 120 g
+      - lumpia_wrapper: 6 pieces
+      - carrots: 30 g
+      - cabbage: 30 g
+      - onion: 15 g
+      - vinegar_dip: 30 ml
+      - cooking_oil: 30 ml
+
+04. TRUFFLE FRIES
+    Description: Golden fries tossed with truffle oil, parmesan, and fresh
+    herbs.
+    Price: PHP 245.00
+    Category: Appetizer
+    Image: assets/imgs/foodmenu/truffle_fries.jpg
+    Ingredients:
+      - potatoes: 200 g
+      - truffle_oil: 10 ml
+      - parmesan: 20 g
+      - fresh_herbs: 5 g
+      - cooking_oil: 30 ml
+
+05. CHICKEN SATAY
+    Description: Grilled chicken skewers marinated in spices and served with
+    peanut sauce.
+    Price: PHP 275.00
+    Category: Appetizer
+    Image: assets/imgs/foodmenu/chicken_satay.jpg
+    Ingredients:
+      - chicken: 180 g
+      - satay_marinade: 30 ml
+      - bamboo_skewers: 3 pieces
+      - peanut_sauce: 50 ml
+
+MAIN COURSE
+-----------
+
+06. QUEST CLASSIC BURGER
+    Description: Char-grilled beef patty with cheddar, lettuce, tomato,
+    onion, house sauce, and golden fries.
+    Price: PHP 395.00
+    Category: Main Course
+    Image: assets/imgs/foodmenu/quest_classic_burger.jpg
+    Ingredients:
+      - beef_patty: 150 g
+      - burger_bun: 1 piece
+      - cheddar: 25 g
+      - lettuce: 20 g
+      - tomato: 30 g
+      - onion: 15 g
+      - house_sauce: 30 ml
+      - fries: 100 g
+
+07. HERB ROASTED CHICKEN
+    Description: Tender herb-roasted chicken breast with garlic mashed
+    potatoes, seasonal vegetables, and pan gravy.
+    Price: PHP 450.00
+    Category: Main Course
+    Image: assets/imgs/foodmenu/herb_roasted_chicken.jpg
+    Ingredients:
+      - chicken_breast: 200 g
+      - potatoes: 150 g
+      - butter: 20 g
+      - seasonal_vegetables: 100 g
+      - pan_gravy: 60 ml
+      - garlic: 8 g
+
+08. SEAFOOD SINIGANG
+    Description: Tamarind broth with prawns, fish, squid, tomatoes, garden
+    vegetables, and steamed rice.
+    Price: PHP 495.00
+    Category: Main Course
+    Image: assets/imgs/foodmenu/seafood_sinigang.jpg
+    Ingredients:
+      - prawns: 80 g
+      - fish: 80 g
+      - squid: 60 g
+      - tamarind_broth: 250 ml
+      - tomatoes: 50 g
+      - garden_vegetables: 100 g
+      - steamed_rice: 150 g
+
+09. TRUFFLE CREAM PASTA
+    Description: Creamy linguine with mushrooms, parmesan, garlic, and
+    truffle oil.
+    Price: PHP 425.00
+    Category: Main Course
+    Image: assets/imgs/foodmenu/truffle_cream_pasta.jpg
+    Ingredients:
+      - linguine: 120 g
+      - mushrooms: 80 g
+      - cream: 100 ml
+      - parmesan: 25 g
+      - garlic: 8 g
+      - truffle_oil: 8 ml
+
+10. ADOBO BEEF TAPA
+    Description: Marinated beef tapa with garlic rice, fried egg, pickled
+    papaya, and spiced vinegar.
+    Price: PHP 375.00
+    Category: Main Course
+    Image: assets/imgs/foodmenu/adobo_beef_tapa.jpg
+    Ingredients:
+      - beef_tapa: 150 g
+      - garlic_rice: 150 g
+      - egg: 1 piece
+      - pickled_papaya: 40 g
+      - spiced_vinegar: 30 ml
+
+11. GRILLED SALMON STEAK
+    Description: Grilled salmon with lemon herb butter, roasted vegetables,
+    and steamed rice.
+    Price: PHP 625.00
+    Category: Main Course
+    Image: assets/imgs/foodmenu/grilled_salmon_steak.jpg
+    Ingredients:
+      - salmon: 200 g
+      - lemon_herb_butter: 25 g
+      - roasted_vegetables: 100 g
+      - steamed_rice: 150 g
+
+12. BEEF KARE-KARE
+    Description: Slow-cooked beef and vegetables in a rich peanut sauce,
+    served with bagoong on the side.
+    Price: PHP 475.00
+    Category: Main Course
+    Image: assets/imgs/foodmenu/beef_kare_kare.jpg
+    Ingredients:
+      - beef: 180 g
+      - peanut_sauce: 150 ml
+      - eggplant: 50 g
+      - string_beans: 50 g
+      - bok_choy: 50 g
+      - bagoong: 30 g
+
+13. CHICKEN TERIYAKI BOWL
+    Description: Grilled teriyaki chicken over steamed rice with sesame,
+    vegetables, and pickled ginger.
+    Price: PHP 385.00
+    Category: Main Course
+    Image: assets/imgs/foodmenu/chicken_teriyaki_bowl.jpg
+    Ingredients:
+      - chicken: 160 g
+      - steamed_rice: 180 g
+      - teriyaki_sauce: 50 ml
+      - sesame_seeds: 5 g
+      - vegetables: 80 g
+      - pickled_ginger: 15 g
+
+14. VEGETABLE CURRY
+    Description: Seasonal vegetables simmered in coconut curry with jasmine
+    rice and fresh herbs.
+    Price: PHP 355.00
+    Category: Main Course
+    Image: assets/imgs/foodmenu/vegetable_curry.jpg
+    Ingredients:
+      - seasonal_vegetables: 180 g
+      - coconut_milk: 150 ml
+      - curry_paste: 30 g
+      - jasmine_rice: 150 g
+      - fresh_herbs: 5 g
+
+BREAKFAST
+---------
+
+15. QUEST BREAKFAST PLATE
+    Description: Eggs, bacon, sausage, breakfast potatoes, grilled tomato,
+    and toast.
+    Price: PHP 395.00
+    Category: Breakfast
+    Image: assets/imgs/foodmenu/quest_breakfast_plate.jpg
+    Ingredients:
+      - eggs: 2 pieces
+      - bacon: 60 g
+      - sausage: 80 g
+      - breakfast_potatoes: 120 g
+      - tomato: 50 g
+      - toast: 2 slices
+
+16. FILIPINO BREAKFAST
+    Description: Garlic rice, eggs, choice of beef tapa or chicken tocino,
+    with fresh tomato salad.
+    Price: PHP 365.00
+    Category: Breakfast
+    Image: assets/imgs/foodmenu/filipino_breakfast.jpg
+    Ingredients:
+      - garlic_rice: 150 g
+      - eggs: 2 pieces
+      - beef_tapa_or_chicken_tocino: 120 g
+      - tomatoes: 60 g
+
+17. BANANA PANCAKE STACK
+    Description: Fluffy banana pancakes with maple syrup, whipped cream, and
+    fresh berries.
+    Price: PHP 295.00
+    Category: Breakfast
+    Image: assets/imgs/foodmenu/banana_pancake_stack.jpg
+    Ingredients:
+      - pancake_batter: 180 g
+      - banana: 1 piece
+      - maple_syrup: 30 ml
+      - whipped_cream: 40 g
+      - fresh_berries: 50 g
+
+18. AVOCADO EGG TOAST
+    Description: Sourdough toast topped with avocado, poached eggs, cherry
+    tomatoes, and chili flakes.
+    Price: PHP 325.00
+    Category: Breakfast
+    Image: assets/imgs/foodmenu/avocado_egg_toast.jpg
+    Ingredients:
+      - sourdough_bread: 2 slices
+      - avocado: 80 g
+      - eggs: 2 pieces
+      - cherry_tomatoes: 40 g
+      - chili_flakes: 2 g
+
+SALADS
+------
+
+19. GARDEN CAESAR SALAD
+    Description: Crisp romaine, parmesan, herb croutons, and Caesar dressing
+    with grilled chicken.
+    Price: PHP 325.00
+    Category: Salad
+    Image: assets/imgs/foodmenu/garden_caesar_salad.jpg
+    Ingredients:
+      - romaine_lettuce: 100 g
+      - parmesan: 20 g
+      - herb_croutons: 30 g
+      - caesar_dressing: 40 ml
+      - grilled_chicken: 100 g
+
+20. MANGO SHRIMP SALAD
+    Description: Mixed greens with mango, shrimp, cucumber, toasted cashews,
+    and citrus dressing.
+    Price: PHP 395.00
+    Category: Salad
+    Image: assets/imgs/foodmenu/mango_shrimp_salad.jpg
+    Ingredients:
+      - mixed_greens: 100 g
+      - mango: 80 g
+      - shrimp: 100 g
+      - cucumber: 50 g
+      - cashews: 20 g
+      - citrus_dressing: 40 ml
+
+DESSERTS
+--------
+
+21. MANGO CHEESECAKE
+    Description: Smooth baked cheesecake topped with ripe mango and a light
+    citrus glaze.
+    Price: PHP 245.00
+    Category: Dessert
+    Image: assets/imgs/foodmenu/mango_cheesecake.jpg
+    Ingredients:
+      - cheesecake: 150 g
+      - mango: 80 g
+      - citrus_glaze: 20 ml
+
+22. CHOCOLATE LAVA CAKE
+    Description: Warm chocolate cake with a molten center, vanilla ice cream,
+    and chocolate drizzle.
+    Price: PHP 275.00
+    Category: Dessert
+    Image: assets/imgs/foodmenu/chocolate_lava_cake.jpg
+    Ingredients:
+      - chocolate_cake: 150 g
+      - vanilla_ice_cream: 80 g
+      - chocolate_drizzle: 20 ml
+
+23. UBE COCONUT PANNA COTTA
+    Description: Silky coconut panna cotta layered with purple yam and
+    toasted coconut.
+    Price: PHP 235.00
+    Category: Dessert
+    Image: assets/imgs/foodmenu/ube_coconut_panna_cotta.jpg
+    Ingredients:
+      - coconut_milk: 120 ml
+      - gelatin: 3 g
+      - ube: 60 g
+      - toasted_coconut: 15 g
+
+BEVERAGES
+---------
+
+24. TROPICAL FRUIT COOLER
+    Description: Chilled blend of pineapple, mango, orange, and lime.
+    Price: PHP 165.00
+    Category: Beverage
+    Image: assets/imgs/foodmenu/tropical_fruit_cooler.jpeg
+    Ingredients:
+      - pineapple: 80 ml
+      - mango: 60 ml
+      - orange: 60 ml
+      - lime: 15 ml
+      - ice: 100 g
+
+25. CALAMANSI ICED TEA
+    Description: House-brewed black tea with fresh calamansi, honey, and
+    chilled ice.
+    Price: PHP 145.00
+    Category: Beverage
+    Image: assets/imgs/foodmenu/calamansi_iced_tea.jpg
+    Ingredients:
+      - black_tea: 250 ml
+      - calamansi: 30 ml
+      - honey: 20 ml
+      - ice: 100 g

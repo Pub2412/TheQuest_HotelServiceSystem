@@ -1,0 +1,45 @@
+THE QUEST HOTEL
+HOTEL SERVICES
+==============
+
+All prices are in PHP. Services are available upon request and are active by
+default.
+
+01. BODY MASSAGE
+    Description: A relaxing full-body massage performed by a trained
+    therapist to ease muscle tension and promote wellness.
+    Price: PHP 1,200.00
+
+02. LAUNDRY SERVICE
+    Description: Professional washing, drying, and folding of guests'
+    clothes with next-day collection.
+    Price: PHP 350.00
+
+03. MINIBAR RESTOCKING
+    Description: Convenient replenishment of snacks and beverages in the
+    guest room minibar based on the guest's selections.
+    Price: PHP 300.00
+
+04. CAR RENTAL
+    Description: Comfortable Car Transport for 1 day within the city only
+    Price: PHP 1,500.00
+
+05. BREAKFAST IN BED
+    Description: A freshly prepared breakfast delivered to the guest room
+    at the requested time.
+    Price: PHP 650.00
+
+06. BREAKFAST BUFFET
+    Description: Enjoy a wide selection of freshly prepared breakfast dishes
+    at the hotel's restaurant.
+    Price: PHP 850.00
+
+07. LUNCH BUFFET
+    Description: A satisfying buffet lunch featuring local and international
+    dishes, salads, sides, and desserts.
+    Price: PHP 1,100.00
+
+08. DINNER BUFFET
+    Description: An elegant evening buffet with a variety of appetizers,
+    main courses, desserts, and refreshing beverages.
+    Price: PHP 1,350.00
