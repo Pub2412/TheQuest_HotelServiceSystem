@@ -43,16 +43,16 @@ class StaffPage(tk.Frame):
         self.current_user = current_user
         self.on_logout_cb = on_logout_cb
 
-        # Determine default tab based on staff role
+        # Staff roles are intentionally isolated to their operational tab.
         role = self.current_user.get("role", "Staff_Kitchen")
-        if "Kitchen" in role:
-            self.default_tab = "kitchen"
-        elif "Logistics" in role:
-            self.default_tab = "logistics"
-        elif "Utilities" in role:
-            self.default_tab = "utilities"
-        else:
-            self.default_tab = "kitchen"
+        self.role_tabs = {
+            "Staff_Kitchen": "kitchen",
+            "Staff_Logistics": "logistics",
+            "Staff_Utilities": "utilities",
+        }
+        self.allowed_tab = self.role_tabs.get(role)
+        self.default_tab = self.allowed_tab or "kitchen"
+        self.allowed_tabs = {self.default_tab, "bulletin", "inbox"}
 
         self._build_layout()
         self._switch_tab(self.default_tab)
@@ -154,6 +154,8 @@ class StaffPage(tk.Frame):
         ]
 
         for tab_id, label in nav_items:
+            if tab_id not in self.allowed_tabs:
+                continue
             btn = tk.Button(
                 self.sidebar,
                 text=label,
@@ -176,6 +178,9 @@ class StaffPage(tk.Frame):
         self.content_container.pack(side="right", fill="both", expand=True)
 
     def _switch_tab(self, tab_id: str):
+        if tab_id not in self.allowed_tabs:
+            return
+
         for tid, btn in self.nav_buttons.items():
             if tid == tab_id:
                 btn.config(bg=COLOR_PRIMARY_LIGHT, fg=COLOR_ACCENT)

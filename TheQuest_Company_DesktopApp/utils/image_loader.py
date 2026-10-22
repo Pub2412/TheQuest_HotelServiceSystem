@@ -22,12 +22,26 @@ def get_full_path(rel_or_abs_path: str) -> Path:
         return candidate
     return None
 
-def load_image(path_str: str, size: tuple, preserve_aspect: bool = True, circular: bool = False):
+def load_image(
+    path_str: str,
+    size: tuple,
+    preserve_aspect: bool = True,
+    circular: bool = False,
+    background: tuple = None,
+    background_radius: int = 0,
+):
     """
     Loads an image from path_str, resizes to size (w, h), and returns ImageTk.PhotoImage.
     If image cannot be loaded, returns a generated placeholder image.
     """
-    cache_key = (path_str, size, preserve_aspect, circular)
+    cache_key = (
+        path_str,
+        size,
+        preserve_aspect,
+        circular,
+        background,
+        background_radius,
+    )
     if cache_key in _CACHE:
         return _CACHE[cache_key]
 
@@ -59,6 +73,20 @@ def load_image(path_str: str, size: tuple, preserve_aspect: bool = True, circula
     else:
         pil_img = pil_img.resize((target_w, target_h), Image.Resampling.LANCZOS)
 
+    if background:
+        plate = Image.new("RGBA", (target_w, target_h), (0, 0, 0, 0))
+        plate_draw = ImageDraw.Draw(plate)
+        if background_radius:
+            plate_draw.rounded_rectangle(
+                (0, 0, target_w - 1, target_h - 1),
+                radius=background_radius,
+                fill=background,
+            )
+        else:
+            plate.paste(Image.new("RGBA", (target_w, target_h), background))
+        plate.alpha_composite(pil_img)
+        pil_img = plate
+
     if circular:
         # Create circular mask
         mask = Image.new("L", (target_w, target_h), 0)
@@ -75,12 +103,22 @@ def load_image(path_str: str, size: tuple, preserve_aspect: bool = True, circula
 def get_logo_image(size: tuple = (160, 160)):
     """Loads system logo from assets/imgs/logo/logotitle.png."""
     logo_path = "assets/imgs/logo/logotitle.png"
-    return load_image(logo_path, size)
+    return load_image(
+        logo_path,
+        size,
+        background=(255, 255, 255, 245),
+        background_radius=max(8, min(size) // 10),
+    )
 
 def get_icon_logo(size: tuple = (40, 40)):
     """Loads small TQ icon from assets/imgs/logo/logo.png."""
     logo_path = "assets/imgs/logo/logo.png"
-    return load_image(logo_path, size)
+    return load_image(
+        logo_path,
+        size,
+        background=(255, 255, 255, 255),
+        background_radius=min(size) // 2,
+    )
 
 def get_hotel_map_image(max_size: tuple = (1200, 650)):
     """Loads the architectural HotelMap.jpg."""

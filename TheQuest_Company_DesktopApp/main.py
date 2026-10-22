@@ -136,7 +136,7 @@ class HotelApp(tk.Tk):
         self.clear_page()
         # Security check
         user_role = self.current_user.get("role", "") if self.current_user else ""
-        if "Staff" not in user_role and user_role != "Admin":
+        if user_role not in {"Staff_Kitchen", "Staff_Logistics", "Staff_Utilities"}:
             self.show_forbidden("Staff Operations Portal")
             return
 

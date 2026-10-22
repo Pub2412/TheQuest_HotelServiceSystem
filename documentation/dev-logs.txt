@@ -16,3 +16,7 @@ To inquire for database please contact me
 19/10/2026
 Finished Quest Company Desktop App
 Checking for Fixations
+
+22/10/2026
+Fixed Visibility for StaffPage.py to be per role
+Fixed logos to bee more contrasted and saturated
