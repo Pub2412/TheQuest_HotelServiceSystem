@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Suites & Residences | The Quest Hotel{% endblock %}
+
+{% block content %}
+
+<!-- Header & Filter Section -->
+<section class="rooms-catalog-header">
+  <div class="container">
+    <span class="section-tag">Sanctuary of Grandeur</span>
+    <h1 class="section-title">The Quest Suites & Residences</h1>
+    <p class="section-desc">
+      Each room at The Quest is an ode to refined comfort. All reservations are exclusively reserved for logged-in guests.
+    </p>
+
+    <!-- If customer is checked in: Quick Extend Stay Banner -->
+    {% if is_checked_in and active_stay %}
+      <div style="background: linear-gradient(135deg, rgba(35, 7, 61, 0.9), rgba(59, 24, 95, 0.8)); border: 1.5px solid var(--color-gold); border-radius: var(--radius-md); padding: 1.5rem 2rem; max-width: 860px; margin: 2rem auto 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; box-shadow: var(--shadow-gold);">
+        <div>
+          <div style="font-size: 0.8rem; color: #34d399; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 0.35rem;">
+            <span class="live-indicator"></span> Your Current Suite
+          </div>
+          <div style="font-family: var(--font-serif); font-size: 1.3rem; font-weight: 700; color: #fff;">
+            Suite {{ active_stay.room_number }} ({{ active_stay.room_type }})
+          </div>
+          <div style="font-size: 0.85rem; color: var(--color-champagne);">
+            Scheduled Check-out: <strong>{{ active_stay.check_out_date }} (12:00 PM)</strong>
+          </div>
+        </div>
+        <button class="btn btn-gold btn-md extend-stay-trigger">
+          <i class="fa-solid fa-clock-rotate-left"></i> Extend This Reservation
+        </button>
+      </div>
+    {% endif %}
+
+    <!-- Filter Pills Bar -->
+    <div class="filter-pills-bar">
+      {% for cat in categories %}
+        <a href="{% if cat == 'All' %}{{ url_for('rooms_view') }}{% else %}{{ url_for('rooms_view', category=cat) }}{% endif %}"
+           class="filter-pill {% if selected_category == cat %}active{% endif %}">
+          {{ cat }}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Rooms Grid -->
+<section style="padding-bottom: 5rem;">
+  <div class="container">
+    <div class="rooms-grid">
+      {% for room in rooms %}
+        <div class="room-card">
+          <div class="room-media">
+            <img src="/{{ room.image }}" alt="{{ room.type }}" class="room-media-img" onerror="this.src='/assets/imgs/rooms/standard_ground_king.jpg'">
+            <span class="room-status-badge {{ room.status_badge.lower() }}">{{ room.status_badge }}</span>
+            <span class="room-floor-badge">{{ room.floor }}</span>
+          </div>
+
+          <div class="room-body">
+            <h3 class="room-title">Suite {{ room.room_number }} • {{ room.type }}</h3>
+            
+            <div class="room-meta-tags">
+              <span><i class="fa-solid fa-users"></i> Up to {{ room.packs }} Packs</span>
+              <span><i class="fa-solid fa-bed"></i> {{ room.bed }}</span>
+              <span><i class="fa-solid fa-vector-square"></i> {{ room.size }}</span>
+            </div>
+
+            <p class="room-desc">{{ room.description }}</p>
+
+            <div class="room-amenities-chips">
+              {% for amenity in room.amenities %}
+                <span class="amenity-chip">{{ amenity }}</span>
+              {% endfor %}
+            </div>
+
+            <div class="room-footer">
+              <div class="room-price-box">
+                <span class="room-price-amt">₱{{ "{:,.2f}".format(room.price_per_night) }}</span>
+                <span class="room-price-unit">per night (incl. taxes)</span>
+              </div>
+
+              {% if room.is_available %}
+                {% if current_user %}
+                  <button class="btn btn-gold btn-sm book-room-trigger"
+                          data-room-id="{{ room.id }}"
+                          data-room-number="{{ room.room_number }}"
+                          data-room-type="{{ room.type }}"
+                          data-room-price="{{ room.price_per_night }}"
+                          data-packs="{{ room.packs }}">
+                    <i class="fa-solid fa-calendar-check"></i> Book Suite
+                  </button>
+                {% else %}
+                  <button class="btn btn-outline-gold btn-sm open-auth-btn" data-tab="login" title="Login required to book reservations">
+                    <i class="fa-solid fa-lock"></i> Login to Reserve
+                  </button>
+                {% endif %}
+              {% else %}
+                <button class="btn btn-outline-white btn-sm" disabled style="opacity: 0.5; cursor: not-allowed;">
+                  {{ room.status }}
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}

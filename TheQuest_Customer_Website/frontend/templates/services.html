@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}In-Stay Services & Dining | The Quest Hotel{% endblock %}
+
+{% block content %}
+
+<!-- Header Section -->
+<section style="padding: 3.5rem 0 2rem 0; text-align: center;">
+  <div class="container">
+    <span class="section-tag">VIP In-Stay Privileges</span>
+    <h1 class="section-title">In-Room Dining & Hotel Services</h1>
+    <p class="section-desc">
+      Delight in Michelin-inspired culinary creations delivered directly to your residence, restorative spa therapies, and bespoke concierge arrangements.
+    </p>
+
+    <!-- In-Stay Status Banner -->
+    {% if not is_checked_in %}
+      <div style="background: rgba(245, 158, 11, 0.12); border: 1.5px solid var(--color-gold); border-radius: var(--radius-md); padding: 1.25rem 2rem; max-width: 860px; margin: 2rem auto 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 1rem; text-align: left;">
+          <i class="fa-solid fa-bell-concierge" style="font-size: 1.8rem; color: var(--color-gold);"></i>
+          <div>
+            <strong style="color: #fff; font-size: 1rem;">Exclusive In-Stay Privilege</strong>
+            <p style="font-size: 0.82rem; color: var(--color-champagne); margin-top: 0.2rem;">
+              Room service and bespoke concierge requests are exclusively dispatched to currently checked-in guests. Preview our menu below or book your suite to unlock instant service.
+            </p>
+          </div>
+        </div>
+        <a href="{{ url_for('rooms_view') }}" class="btn btn-gold btn-sm">
+          <i class="fa-solid fa-bed"></i> Reserve a Suite
+        </a>
+      </div>
+    {% else %}
+      <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(6, 95, 70, 0.25)); border: 1px solid #10b981; border-radius: var(--radius-md); padding: 1rem 1.8rem; max-width: 860px; margin: 2rem auto 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <span class="live-indicator"></span>
+          <span style="color: #fff; font-size: 0.95rem;">
+            Delivering to <strong>Suite {{ active_stay.room_number }}</strong> ({{ active_stay.room_type }})
+          </span>
+        </div>
+        <span style="font-size: 0.8rem; color: #34d399; font-weight: 600;">
+          <i class="fa-solid fa-clock"></i> Average Room Service Arrival: 25-35 mins
+        </span>
+      </div>
+    {% endif %}
+
+    <!-- Tabs Navigation -->
+    <div class="services-tabs-nav" style="margin-top: 2.5rem;">
+      <a href="#dining-menu" class="service-tab-btn active">
+        <i class="fa-solid fa-utensils"></i> In-Room Dining Menu
+      </a>
+      <a href="#hotel-services" class="service-tab-btn">
+        <i class="fa-solid fa-spa"></i> Hotel Services & Buffets
+      </a>
+      <a href="#ridiculous-request" class="service-tab-btn">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> The Ridiculous Request
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 1: IN-ROOM DINING MENU -->
+<section id="dining-menu" style="padding-bottom: 4rem;">
+  <div class="container">
+    {% for category, items in food_menu.items() %}
+      <div class="food-category-section">
+        <h2 class="food-cat-title">
+          <i class="fa-solid fa-circle-check" style="color: var(--color-gold); font-size: 1rem;"></i>
+          <span>{{ category }}</span>
+        </h2>
+
+        <div class="food-grid">
+          {% for food in items %}
+            <div class="food-card">
+              <div class="food-img-wrap">
+                <img src="/{{ food.image }}" alt="{{ food.name }}" class="food-img" onerror="this.src='/assets/imgs/foodmenu/garlic_butter_shrimp.jpg'">
+              </div>
+              <div class="food-body">
+                <h3 class="food-name">{{ food.name }}</h3>
+                <p class="food-desc">{{ food.description }}</p>
+                <div class="food-footer">
+                  <span class="food-price">₱{{ "{:,.2f}".format(food.price) }}</span>
+                  {% if is_checked_in %}
+                    <button class="btn btn-gold btn-sm add-to-cart-btn"
+                            data-id="{{ food.id }}"
+                            data-name="{{ food.name }}"
+                            data-price="{{ food.price }}">
+                      <i class="fa-solid fa-plus"></i> Add to Order
+                    </button>
+                  {% else %}
+                    <button class="btn btn-outline-white btn-sm" disabled title="Order unlocks when checked in" style="opacity: 0.6; cursor: not-allowed;">
+                      In-Stay Only
+                    </button>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- SECTION 2: HOTEL SERVICES & BUFFETS -->
+<section id="hotel-services" style="padding: 4rem 0; background: rgba(14, 2, 26, 0.6); border-top: 1px solid rgba(245, 158, 11, 0.15); border-bottom: 1px solid rgba(245, 158, 11, 0.15);">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Holistic Well-being & Transport</span>
+      <h2 class="section-title">Hotel Services & Dining Passes</h2>
+      <p class="section-desc">Rejuvenate with certified spa therapists, express laundry, or private city chauffeuring.</p>
+    </div>
+
+    <div class="food-grid">
+      {% for s in hotel_services %}
+        <div class="food-card">
+          <div class="food-img-wrap" style="height: 200px;">
+            <img src="/{{ s.image }}" alt="{{ s.name }}" class="food-img" onerror="this.src='/assets/imgs/serv/massage.jpg'">
+          </div>
+          <div class="food-body">
+            <h3 class="food-name">{{ s.name }}</h3>
+            <p class="food-desc">{{ s.description }}</p>
+            <div class="food-footer">
+              <span class="food-price">₱{{ "{:,.2f}".format(s.price) }}</span>
+              {% if is_checked_in %}
+                <button class="btn btn-gold btn-sm book-service-trigger"
+                        data-service-id="{{ s.id }}"
+                        data-service-name="{{ s.name }}"
+                        data-service-price="{{ s.price }}">
+                  <i class="fa-solid fa-calendar-plus"></i> Book Service
+                </button>
+              {% else %}
+                <button class="btn btn-outline-white btn-sm" disabled style="opacity: 0.6; cursor: not-allowed;">
+                  In-Stay Only
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 3: THE RIDICULOUS REQUEST CONCIERGE -->
+<section id="ridiculous-request" style="padding: 5rem 0;">
+  <div class="container">
+    <div class="ridiculous-builder-box">
+      <div class="oath-seal" style="width: 64px; height: 64px; font-size: 1.6rem; margin-bottom: 1rem;">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+      </div>
+      <span class="section-tag">The Quest Sacred Promise</span>
+      <h2 style="font-family: var(--font-serif); font-size: 2.2rem; color: #fff; margin: 0.5rem 0 1rem 0;">
+        "The Ridiculous Request" Concierge
+      </h2>
+      <p style="font-size: 1rem; color: var(--color-champagne); max-width: 680px; margin: 0 auto; line-height: 1.6;">
+        Have an extraordinary, whimsical, or deeply personal request? As declared in our founding oath — 
+        <em>"We shall never deny a guest, even the most ridiculous request."</em> Tell us exactly what your heart desires, and our white-glove concierge team will execute it with devotion.
+      </p>
+
+      {% if is_checked_in %}
+        <div style="margin-top: 1.5rem;">
+          <textarea id="ridiculous-request-text" class="ridiculous-textarea" placeholder="e.g. Please arrange for a violinist on our balcony at 8:00 PM, prepare 15 yellow bath ducks in the marble tub, and deliver warm cinnamon churros at 1:00 AM..."></textarea>
+          <button type="button" id="submit-ridiculous-btn" class="btn btn-gold btn-lg">
+            <i class="fa-solid fa-paper-plane"></i> Transmit Request to Head Concierge
+          </button>
+        </div>
+      {% else %}
+        <div style="background: rgba(255, 255, 255, 0.05); border: 1px dashed var(--color-gold-border); border-radius: var(--radius-md); padding: 2rem; margin-top: 2rem;">
+          <i class="fa-solid fa-lock" style="font-size: 2rem; color: var(--color-gold); margin-bottom: 0.75rem;"></i>
+          <h4 style="color: #fff; font-size: 1.15rem; margin-bottom: 0.4rem;">In-Stay Concierge Service</h4>
+          <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); max-width: 520px; margin: 0 auto 1.25rem auto;">
+            The Ridiculous Request Concierge is actively available to all guests during their hotel stay. Check in to your room to submit unlimited bespoke desires.
+          </p>
+          <a href="{{ url_for('rooms_view') }}" class="btn btn-gold btn-sm">
+            <i class="fa-solid fa-bed"></i> Book Your Stay
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}

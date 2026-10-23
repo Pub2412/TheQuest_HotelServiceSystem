@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}The Quest Hotel | Luxury Residences & Suites{% endblock %}</title>
+  <meta name="description" content="Experience unparalleled 5-star royal hospitality at The Quest Hotel. We shall never deny a guest, even the most ridiculous request.">
+  
+  <!-- Favicon / Logo -->
+  <link rel="icon" type="image/png" href="/assets/imgs/logo/logo.png">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Core Luxury Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- ======================================================================
+       TOP VIP CREED & CONTACTS BAR
+       ====================================================================== -->
+  <div class="vip-topbar">
+    <div class="container">
+      <div class="vip-creed">
+        <i class="fa-solid fa-crown"></i>
+        <span>"We shall never deny a guest, even the most ridiculous request"</span>
+      </div>
+      <div class="vip-contacts">
+        <span><i class="fa-solid fa-phone"></i> Concierge: <strong>+63 (2) 8888-QUEST</strong></span>
+        <span><i class="fa-solid fa-envelope"></i> <strong>concierge@thequest.com</strong></span>
+        <span><i class="fa-solid fa-location-dot"></i> Royal Palm Boulevard</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       PRIMARY NAVIGATION BAR
+       ====================================================================== -->
+  <header class="quest-navbar">
+    <div class="container">
+      <div class="navbar-inner">
+        <!-- Brand Identity -->
+        <a href="{{ url_for('index') }}" class="brand-wrapper">
+          <img src="/assets/imgs/logo/logo.png" alt="The Quest Hotel" class="brand-logo-img">
+          <div class="brand-text">
+            <span class="brand-title">The Quest</span>
+            <span class="brand-subtitle">Hotel & Residences</span>
+          </div>
+        </a>
+
+        <!-- Navigation Links -->
+        <nav>
+          <ul class="nav-links">
+            <li><a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">Home</a></li>
+            <li><a href="{{ url_for('rooms_view') }}" class="nav-link {% if request.endpoint == 'rooms_view' %}active{% endif %}">Suites & Rooms</a></li>
+            <li><a href="{{ url_for('services_view') }}" class="nav-link {% if request.endpoint == 'services_view' %}active{% endif %}">In-Stay Services</a></li>
+            <li><a href="{{ url_for('ask_view') }}" class="nav-link {% if request.endpoint == 'ask_view' %}active{% endif %}">Ask Concierge</a></li>
+            <li><a href="{{ url_for('rewards_view') }}" class="nav-link {% if request.endpoint == 'rewards_view' %}active{% endif %}">Loyalty Rewards</a></li>
+            <li><a href="{{ url_for('about_view') }}" class="nav-link {% if request.endpoint == 'about_view' %}active{% endif %}">About The Quest</a></li>
+          </ul>
+        </nav>
+
+        <!-- Right Side Nav Actions -->
+        <div class="nav-actions">
+          {% if is_checked_in and active_stay %}
+            <!-- Checked In Status Pill -->
+            <a href="{{ url_for('profile_view') }}" class="stay-nav-pill" title="You are currently staying in Room {{ active_stay.room_number }}">
+              <span class="live-indicator"></span>
+              <span>Room {{ active_stay.room_number }}</span>
+            </a>
+          {% endif %}
+
+          {% if current_user %}
+            <!-- Logged In Guest Menu -->
+            <a href="{{ url_for('profile_view') }}" class="user-menu-btn">
+              <img src="/{{ current_user.image_path or 'assets/imgs/customers/f/1.jpg' }}" alt="{{ current_user.name }}" class="user-avatar-mini" onerror="this.src='/assets/imgs/customers/f/1.jpg'">
+              <div class="user-info-mini">
+                <span class="user-name-mini">{{ current_user.name }}</span>
+                <span class="user-points-badge"><i class="fa-solid fa-gem"></i> {{ "{:,}".format(current_user.loyalty_points or 0) }} pts</span>
+              </div>
+            </a>
+            <a href="{{ url_for('api_logout') }}" class="btn btn-outline-white btn-sm" title="Sign Out">
+              <i class="fa-solid fa-right-from-bracket"></i>
+            </a>
+          {% else %}
+            <!-- Visitor Sign In Button -->
+            <button class="btn btn-gold btn-sm open-auth-btn" data-tab="login">
+              <i class="fa-solid fa-user"></i>
+              <span>Guest Sign In</span>
+            </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================================================================
+       MAIN CONTENT BLOCK
+       ====================================================================== -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ======================================================================
+       GLOBAL AUTHENTICATION MODAL (LOGIN, REGISTER, FORGOT, SOCIAL)
+       ====================================================================== -->
+  <div class="quest-modal-overlay" id="auth-modal">
+    <div class="quest-modal">
+      <button class="modal-close-btn close-auth-btn" aria-label="Close Modal"><i class="fa-solid fa-xmark"></i></button>
+
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <img src="/assets/imgs/logo/logo.png" alt="The Quest" style="height: 54px; margin: 0 auto 0.75rem auto;">
+        <h3 style="font-family: var(--font-serif); font-size: 1.6rem; color: #fff;">The Quest Guest Portal</h3>
+        <p style="font-size: 0.85rem; color: var(--color-champagne); font-style: italic;">
+          "We shall never deny a guest, even the most ridiculous request"
+        </p>
+      </div>
+
+      <!-- Security 3-Strike Lockout Alert Box -->
+      <div class="lockout-alert" id="lockout-alert-box" style="display: none;">
+        <i class="fa-solid fa-shield-halved" style="font-size: 1.2rem;"></i>
+        <div>
+          <strong>Security Lockout Engaged</strong><br>
+          Account locked due to 3 failed attempts. Unlocking in <span id="lockout-timer-val" style="font-weight: 800; color: #fff;">60s</span>.
+        </div>
+      </div>
+
+      <!-- Auth Tabs Header -->
+      <div class="auth-tabs-header">
+        <button class="auth-tab-btn active" data-target="login-pane">Sign In</button>
+        <button class="auth-tab-btn" data-target="register-pane">Register</button>
+        <button class="auth-tab-btn" data-target="forgot-pane">Forgot Password</button>
+      </div>
+
+      <!-- PANE 1: SIGN IN (EMAIL OR MOBILE) -->
+      <div class="auth-pane" id="login-pane">
+        <form id="login-form">
+          <div class="form-group">
+            <label class="form-label">Email or Mobile Number</label>
+            <input type="text" id="login-identifier" class="form-control" placeholder="e.g. amelia.watson@gmail.com or +63 919 111 0001" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
+            <div style="font-size: 0.72rem; color: var(--color-text-subtle); margin-top: 0.3rem;">
+              Demo password for sample accounts: <strong>Password123!</strong>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-gold btn-lg" id="login-submit-btn" style="width: 100%; margin-top: 0.8rem;">
+            <i class="fa-solid fa-key"></i> Sign In to Account
+          </button>
+        </form>
+
+        <div style="text-align: center; margin: 1.4rem 0 0.8rem 0; font-size: 0.82rem; color: var(--color-text-subtle);">
+          ── OR CONNECT INSTANTLY VIA SOCIAL ──
+        </div>
+
+        <div class="social-login-grid">
+          <button class="btn-social google social-login-trigger" data-provider="Google">
+            <i class="fa-brands fa-google" style="color: #ea4335;"></i> Google
+          </button>
+          <button class="btn-social facebook social-login-trigger" data-provider="Facebook">
+            <i class="fa-brands fa-facebook-f" style="color: #1877f2;"></i> Facebook
+          </button>
+        </div>
+      </div>
+
+      <!-- PANE 2: REGISTER -->
+      <div class="auth-pane" id="register-pane" style="display: none;">
+        <form id="register-form">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" id="reg-name" class="form-control" placeholder="e.g. Lady Vivienne Rose" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" id="reg-email" class="form-control" placeholder="vivienne@example.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mobile Number</label>
+            <input type="text" id="reg-mobile" class="form-control" placeholder="+63 919 000 0000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="reg-password" class="form-control" placeholder="Minimum 6 characters" required>
+          </div>
+          <button type="submit" class="btn btn-gold btn-lg" style="width: 100%; margin-top: 0.8rem;">
+            <i class="fa-solid fa-crown"></i> Complete VIP Registration (+100 Pts)
+          </button>
+        </form>
+      </div>
+
+      <!-- PANE 3: FORGOT PASSWORD -->
+      <div class="auth-pane" id="forgot-pane" style="display: none;">
+        <form id="forgot-form">
+          <p style="font-size: 0.88rem; color: rgba(255,255,255,0.7); margin-bottom: 1rem;">
+            Enter your registered email address or mobile number to set a new password.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Email or Mobile Number</label>
+            <input type="text" id="forgot-identifier" class="form-control" placeholder="Registered identifier" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">New Password</label>
+            <input type="password" id="forgot-new-password" class="form-control" placeholder="Enter new secure password" required>
+          </div>
+          <button type="submit" class="btn btn-gold btn-lg" style="width: 100%; margin-top: 0.8rem;">
+            <i class="fa-solid fa-rotate-left"></i> Reset Password
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       GLOBAL ROOM BOOKING MODAL
+       ====================================================================== -->
+  <div class="quest-modal-overlay" id="booking-modal">
+    <div class="quest-modal" style="max-width: 620px;">
+      <button class="modal-close-btn" id="close-booking-btn" aria-label="Close Modal"><i class="fa-solid fa-xmark"></i></button>
+
+      <div style="margin-bottom: 1.5rem; text-align: center;">
+        <span class="section-tag">Direct Suite Reservation</span>
+        <h3 id="modal-room-name" style="font-family: var(--font-serif); font-size: 1.6rem; color: #fff; margin: 0.2rem 0;">Suite Booking</h3>
+        <div id="modal-room-price" style="font-size: 1.25rem; font-weight: 800; color: var(--color-gold);">₱0.00 / night</div>
+      </div>
+
+      <form id="booking-form">
+        <input type="hidden" id="modal-room-id" value="">
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label"><i class="fa-regular fa-calendar-check"></i> Check-in Date</label>
+            <input type="date" id="modal-check-in" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label"><i class="fa-regular fa-calendar-xmark"></i> Check-out Date</label>
+            <input type="date" id="modal-check-out" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-users"></i> Number of Guests</label>
+          <select id="modal-guests" class="form-control">
+            <option value="1">1 Guest</option>
+            <option value="2" selected>2 Guests</option>
+            <option value="3">3 Guests</option>
+            <option value="4">4 Guests</option>
+            <option value="6">6 Guests (VIP Suites)</option>
+          </select>
+        </div>
+
+        <!-- Special & Ridiculous Requests Input -->
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fa-solid fa-sparkles" style="color: var(--color-gold);"></i> 
+            Special or Extravagant Requests (Our Creed: "We shall never deny a guest, even the most ridiculous request")
+          </label>
+          <textarea id="modal-special-requests" class="form-control" rows="3" placeholder="e.g. 10 warm lavender pillows, midnight chocolate fondue on arrival, custom temperature at 21°C..."></textarea>
+        </div>
+
+        <!-- Price Calculation Summary -->
+        <div style="background: rgba(14,2,26,0.85); border: 1px solid var(--color-gold-border); padding: 1.2rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.4rem;">
+            <span style="color: rgba(255,255,255,0.7);">Duration:</span>
+            <strong id="calc-nights-count" style="color: #fff;">0 nights</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 1.15rem; font-weight: 800;">
+            <span style="color: var(--color-champagne);">Estimated Total:</span>
+            <span id="calc-total-cost" style="color: var(--color-gold);">₱0.00</span>
+          </div>
+          <div style="font-size: 0.72rem; color: #10b981; margin-top: 0.35rem; display: flex; align-items: center; gap: 0.3rem;">
+            <i class="fa-solid fa-gem"></i> Earn 1 Loyalty Point for every ₱100 spent
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-gold btn-lg" style="width: 100%;">
+          <i class="fa-solid fa-shield-check"></i> Confirm Reservation
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       GLOBAL EXTEND STAY MODAL (FOR CHECKED-IN GUESTS)
+       ====================================================================== -->
+  {% if is_checked_in and active_stay %}
+  <div class="quest-modal-overlay" id="extend-stay-modal">
+    <div class="quest-modal" style="max-width: 540px;">
+      <button class="modal-close-btn" id="close-extend-btn" aria-label="Close Modal"><i class="fa-solid fa-xmark"></i></button>
+
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <span class="section-tag">Active Residence Privilege</span>
+        <h3 style="font-family: var(--font-serif); font-size: 1.6rem; color: #fff;">Extend Your Stay</h3>
+        <p style="font-size: 0.9rem; color: var(--color-champagne);">
+          Suite {{ active_stay.room_number }} ({{ active_stay.room_type }})
+        </p>
+      </div>
+
+      <form id="extend-stay-form">
+        <div class="form-group">
+          <label class="form-label">Current Check-out Date</label>
+          <input type="text" class="form-control" value="{{ active_stay.check_out_date }} (12:00 PM)" readonly>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Extend By</label>
+          <select id="extend-days-select" class="form-control">
+            <option value="1">+1 Night (₱{{ "{:,.2f}".format(active_stay.price_per_night * 1) }})</option>
+            <option value="2">+2 Nights (₱{{ "{:,.2f}".format(active_stay.price_per_night * 2) }})</option>
+            <option value="3">+3 Nights (₱{{ "{:,.2f}".format(active_stay.price_per_night * 3) }})</option>
+            <option value="5">+5 Nights (₱{{ "{:,.2f}".format(active_stay.price_per_night * 5) }})</option>
+            <option value="7">+1 Week (₱{{ "{:,.2f}".format(active_stay.price_per_night * 7) }})</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Payment Method</label>
+          <select id="extend-payment-method" class="form-control">
+            <option value="Room Folio Charge">Charge to Room Bill (Pay upon departure)</option>
+            <option value="Credit Card (Ending in 4021)">Saved Platinum Card (Ending in 4021)</option>
+            <option value="GCash / Maya">GCash / Maya Instant Payment</option>
+            <option value="Cash at Front Desk">Cash at Front Desk</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-gold btn-lg" style="width: 100%; margin-top: 1rem;">
+          <i class="fa-solid fa-clock-rotate-left"></i> Confirm Stay Extension & Charge
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ======================================================================
+       GLOBAL DINING CART DRAWER MODAL
+       ====================================================================== -->
+  <div class="quest-modal-overlay" id="dining-cart-drawer">
+    <div class="quest-modal" style="max-width: 540px;">
+      <button class="modal-close-btn" id="close-cart-btn" aria-label="Close Cart"><i class="fa-solid fa-xmark"></i></button>
+
+      <div style="text-align: center; margin-bottom: 1.25rem;">
+        <span class="section-tag">Room Service Dining</span>
+        <h3 style="font-family: var(--font-serif); font-size: 1.5rem; color: #fff;">In-Room Dining Order</h3>
+      </div>
+
+      <div id="cart-items-list" style="max-height: 260px; overflow-y: auto; margin-bottom: 1.25rem;">
+        <!-- Filled dynamically by main.js -->
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Delivery Schedule</label>
+        <select id="cart-delivery-time" class="form-control">
+          <option value="As soon as ready (approx. 25-35 mins)">As soon as ready (25-35 mins)</option>
+          <option value="In 45 minutes">In 45 minutes</option>
+          <option value="Tonight at 8:00 PM">Tonight at 8:00 PM</option>
+          <option value="Tomorrow Breakfast (7:30 AM)">Tomorrow Breakfast (7:30 AM)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Culinary Requests & Dietary Instructions</label>
+        <input type="text" id="cart-kitchen-notes" class="form-control" placeholder="e.g. Extra parmesan, spicy, cutlery for 2">
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.15); padding: 1rem 0; margin-bottom: 1.2rem;">
+        <span style="font-size: 1.1rem; color: var(--color-champagne);">Order Subtotal:</span>
+        <span id="cart-subtotal-val" style="font-size: 1.45rem; font-weight: 800; color: var(--color-gold);">₱0.00</span>
+      </div>
+
+      <button type="button" id="submit-food-order-btn" class="btn btn-gold btn-lg" style="width: 100%;">
+        <i class="fa-solid fa-bell-concierge"></i> Place Room Service Order
+      </button>
+    </div>
+  </div>
+
+  <!-- Floating Cart FAB Button -->
+  <div class="floating-cart-bar">
+    <button class="cart-fab-btn" id="open-cart-fab" title="View Dining Cart">
+      <i class="fa-solid fa-utensils"></i>
+      <span>Dining Cart</span>
+      <span class="cart-counter" id="cart-counter-badge" style="display: none;">0</span>
+    </button>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container"></div>
+
+  <!-- ======================================================================
+       GLOBAL LUXURY FOOTER
+       ====================================================================== -->
+  <footer class="quest-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <!-- Brand Info -->
+        <div class="footer-brand">
+          <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.5rem;">
+            <img src="/assets/imgs/logo/logo.png" alt="The Quest" style="height: 48px;">
+            <span style="font-family: var(--font-serif); font-size: 1.4rem; font-weight: 700; color: #fff;">The Quest</span>
+          </div>
+          <p>
+            An enclave of distinguished luxury where heritage elegance seamlessly merges with contemporary luxury living.
+          </p>
+          <div style="font-family: var(--font-display); font-style: italic; color: var(--color-champagne); font-size: 0.95rem; border-left: 2px solid var(--color-gold); padding-left: 0.8rem;">
+            "We shall never deny a guest, even the most ridiculous request"
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div>
+          <h4 class="footer-heading">Suites & Living</h4>
+          <ul class="footer-links">
+            <li><a href="{{ url_for('rooms_view', category='Standard Ground') }}">Standard Ground Suites</a></li>
+            <li><a href="{{ url_for('rooms_view', category='Deluxe') }}">Deluxe Courtyard</a></li>
+            <li><a href="{{ url_for('rooms_view', category='Deluxe Balcony') }}">Deluxe Balcony Suites</a></li>
+            <li><a href="{{ url_for('rooms_view', category='Executive Suite') }}">Executive Royal Suites</a></li>
+            <li><a href="{{ url_for('rooms_view', category='Penthouse & VIP') }}">Penthouse Presidential</a></li>
+          </ul>
+        </div>
+
+        <!-- Guest Services -->
+        <div>
+          <h4 class="footer-heading">Services & Dining</h4>
+          <ul class="footer-links">
+            <li><a href="{{ url_for('services_view') }}">In-Room Dining Menu</a></li>
+            <li><a href="{{ url_for('services_view') }}#hotel-services">Spa & Wellness</a></li>
+            <li><a href="{{ url_for('services_view') }}#ridiculous-request">The Ridiculous Request</a></li>
+            <li><a href="{{ url_for('rewards_view') }}">Loyalty Rewards Club</a></li>
+            <li><a href="{{ url_for('ask_view') }}">Concierge Desk Calling</a></li>
+          </ul>
+        </div>
+
+        <!-- Concierge & Contact -->
+        <div>
+          <h4 class="footer-heading">White-Glove Concierge</h4>
+          <p style="font-size: 0.85rem; color: rgba(255,255,255,0.7); line-height: 1.6; margin-bottom: 1rem;">
+            Our 24-hour head concierge is dedicated to fulfilling your every request with discreet and impeccable care.
+          </p>
+          <div style="font-size: 0.85rem; color: var(--color-gold);">
+            <div><i class="fa-solid fa-phone"></i> Direct: +63 (2) 8888-QUEST</div>
+            <div style="margin-top: 0.35rem;"><i class="fa-solid fa-envelope"></i> concierge@thequest.com</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>&copy; {{ now_year }} The Quest Hotel & Residences. All Rights Reserved.</div>
+        <div style="display: flex; gap: 1.5rem;">
+          <a href="{{ url_for('about_view') }}" style="color: var(--color-text-subtle);">Hotel Map & Floorplan</a>
+          <a href="{{ url_for('about_view') }}" style="color: var(--color-text-subtle);">Privacy & Guest Policies</a>
+          <a href="{{ url_for('about_view') }}" style="color: var(--color-text-subtle);">Terms of Residence</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Core JavaScript -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

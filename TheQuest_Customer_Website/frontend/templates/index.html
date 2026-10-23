@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block title %}The Quest Hotel & Residences | An Oasis of Uncompromising Luxury{% endblock %}
+
+{% block content %}
+
+<!-- ==========================================================================
+     1. HERO PROMOTIONAL CAROUSEL (AUTOMATIC & MANUAL TRANSITIONS)
+     ========================================================================== -->
+<section class="hero-carousel-section">
+  <div class="carousel-container">
+    {% for promo in promotions %}
+      <div class="carousel-slide {% if loop.first %}active{% endif %}">
+        <img src="/{{ promo.image }}" alt="{{ promo.title }}" class="slide-img-bg">
+        <div class="slide-overlay-gradient"></div>
+        <div class="container" style="height: 100%;">
+          <div class="slide-content">
+            <div class="slide-badge">
+              <i class="fa-solid fa-crown"></i>
+              <span>{{ promo.badge }}</span>
+            </div>
+            <h1 class="slide-title">{{ promo.title }}</h1>
+            <p class="slide-subtitle">{{ promo.subtitle }}</p>
+            <div class="slide-tagline-quote">
+              "{{ promo.tagline }}"
+            </div>
+            <div class="slide-actions">
+              <a href="{{ promo.button_link }}" class="btn btn-gold btn-lg">
+                <i class="fa-solid fa-compass"></i> {{ promo.button_text }}
+              </a>
+              <a href="{{ url_for('about_view') }}" class="btn btn-outline-white btn-lg">
+                <i class="fa-solid fa-map-location-dot"></i> View Hotel Map
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+
+    <!-- Carousel Manual Controls -->
+    <button class="carousel-btn prev" aria-label="Previous Slide"><i class="fa-solid fa-chevron-left"></i></button>
+    <button class="carousel-btn next" aria-label="Next Slide"><i class="fa-solid fa-chevron-right"></i></button>
+
+    <!-- Carousel Indicator Dots -->
+    <div class="carousel-indicators">
+      {% for promo in promotions %}
+        <div class="indicator-dot {% if loop.first %}active{% endif %}" data-index="{{ loop.index0 }}"></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     2. DYNAMIC STAY RESIDENCE WIDGET (ONLY VISIBLE IF CUSTOMER IS CHECKED IN)
+     ========================================================================== -->
+{% if is_checked_in and active_stay %}
+<div class="container">
+  <div class="active-stay-banner">
+    <div class="stay-widget-grid">
+      <!-- Guest & Room Info -->
+      <div class="stay-guest-info">
+        <div class="badge-instay-active" style="margin-bottom: 0.5rem;">
+          <span class="live-indicator"></span> Currently Checked In
+        </div>
+        <h3>Welcome Home, {{ current_user.name }}</h3>
+        <div class="stay-room-tag">
+          <i class="fa-solid fa-key" style="color: var(--color-gold);"></i>
+          <span>Suite <strong>{{ active_stay.room_number }}</strong> — {{ active_stay.room_type }}</span>
+        </div>
+      </div>
+
+      <!-- Real-Time Stay Duration Countdown -->
+      <div class="stay-countdown-box" id="stay-countdown" data-target-iso="{{ active_stay.countdown.target_iso }}">
+        <span class="countdown-label">
+          <i class="fa-regular fa-clock"></i> Time Left on Stay Duration
+        </span>
+        <div class="countdown-digits">
+          <div class="digit-block">
+            <span class="digit-val" id="cd-days">{{ "%02d"|format(active_stay.countdown.days) }}</span>
+            <span class="digit-lbl">Days</span>
+          </div>
+          <span class="countdown-colon">:</span>
+          <div class="digit-block">
+            <span class="digit-val" id="cd-hours">{{ "%02d"|format(active_stay.countdown.hours) }}</span>
+            <span class="digit-lbl">Hours</span>
+          </div>
+          <span class="countdown-colon">:</span>
+          <div class="digit-block">
+            <span class="digit-val" id="cd-mins">{{ "%02d"|format(active_stay.countdown.minutes) }}</span>
+            <span class="digit-lbl">Mins</span>
+          </div>
+          <span class="countdown-colon">:</span>
+          <div class="digit-block">
+            <span class="digit-val" id="cd-secs">{{ "%02d"|format(active_stay.countdown.seconds) }}</span>
+            <span class="digit-lbl">Secs</span>
+          </div>
+        </div>
+        <div id="cd-status-text" style="font-size: 0.75rem; color: var(--color-champagne); margin-top: 0.4rem; font-weight: 600;">
+          {{ active_stay.countdown.status_text }}
+        </div>
+      </div>
+
+      <!-- Stay Schedule Dates -->
+      <div class="stay-schedule-dates">
+        <div><span>Check-in:</span> <strong>{{ active_stay.check_in_date }}</strong></div>
+        <div><span>Check-out:</span> <strong>{{ active_stay.check_out_date }} (12:00 PM)</strong></div>
+        <div><span>Rate:</span> <strong>₱{{ "{:,.2f}".format(active_stay.price_per_night) }} / night</strong></div>
+      </div>
+
+      <!-- Quick Stay Action -->
+      <div class="stay-actions-cluster">
+        <button class="btn btn-gold btn-sm extend-stay-trigger">
+          <i class="fa-solid fa-clock-rotate-left"></i> Extend Reservation
+        </button>
+        <a href="{{ url_for('services_view') }}" class="btn btn-outline-white btn-sm">
+          <i class="fa-solid fa-utensils"></i> Room Service
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ==========================================================================
+     3. QUICK ACCESS NAVIGATION CARDS (6 CORE FUNCTIONAL SECTIONS)
+     ========================================================================== -->
+<section class="quick-access-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Guest Privileges & Navigation</span>
+      <h2 class="section-title">Experience The Quest Services</h2>
+      <p class="section-desc">
+        Seamlessly manage your stay, explore in-room gourmet dining, converse with 24/7 concierge, and redeem royal loyalty rewards.
+      </p>
+    </div>
+
+    <div class="quick-tiles-grid">
+      
+      <!-- TILE 1: PROFILE VIEW -->
+      <div class="tile-card">
+        <div>
+          <div class="tile-icon-box">
+            <i class="fa-solid fa-user-tie"></i>
+          </div>
+          <h3 class="tile-title">
+            <span>Guest Profile</span>
+            <span class="badge-instay-active"><i class="fa-solid fa-shield-check"></i> VIP</span>
+          </h3>
+          <p class="tile-desc">
+            Manage your personal contact information, connected Google and Facebook accounts, view loyalty tier ranking, and browse full reservation history.
+          </p>
+        </div>
+        <div class="tile-footer">
+          {% if current_user %}
+            <a href="{{ url_for('profile_view') }}" class="tile-link-text">
+              <span>View Profile</span> <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          {% else %}
+            <button class="btn-outline-gold btn-sm open-auth-btn" data-tab="login" style="border-radius: var(--radius-full);">
+              Sign In to Profile
+            </button>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- TILE 2: MAKE RESERVATION / EXTEND RESERVATION -->
+      <div class="tile-card" style="border-color: rgba(245, 158, 11, 0.45);">
+        <div>
+          <div class="tile-icon-box">
+            <i class="fa-solid fa-hotel"></i>
+          </div>
+          <h3 class="tile-title">
+            {% if is_checked_in %}
+              <span>Extend Reservation</span>
+              <span class="badge-instay-active"><i class="fa-solid fa-circle-check"></i> Active Stay</span>
+            {% else %}
+              <span>Make Reservation</span>
+              <span class="badge-instay-locked" style="color: var(--color-champagne);"><i class="fa-solid fa-lock"></i> Members Only</span>
+            {% endif %}
+          </h3>
+          <p class="tile-desc">
+            {% if is_checked_in %}
+              Prolong your unforgettable stay. Add extra nights with instant card, room folio charge, or online payment.
+            {% else %}
+              Browse our 17 bespoke suites and room types. Exclusive bookings reserved strictly for logged-in guests.
+            {% endif %}
+          </p>
+        </div>
+        <div class="tile-footer">
+          {% if is_checked_in %}
+            <button class="btn btn-gold btn-sm extend-stay-trigger">
+              <span>Extend Stay Now</span> <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          {% else %}
+            <a href="{{ url_for('rooms_view') }}" class="tile-link-text">
+              <span>Book a Suite</span> <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- TILE 3: ASK QUESTIONS (IN-STAY PRIVILEGE) -->
+      <div class="tile-card">
+        <div>
+          <div class="tile-icon-box">
+            <i class="fa-solid fa-headset"></i>
+          </div>
+          <h3 class="tile-title">
+            <span>Ask Concierge</span>
+            {% if is_checked_in %}
+              <span class="badge-instay-active"><i class="fa-solid fa-phone-volume"></i> 24/7 Live</span>
+            {% else %}
+              <span class="badge-instay-locked" title="Available during your hotel stay"><i class="fa-solid fa-lock"></i> In-Stay Privilege</span>
+            {% endif %}
+          </h3>
+          <p class="tile-desc">
+            {% if is_checked_in %}
+              Connect directly with our 24/7 Front Desk, request immediate phone callback to your suite, or ask concierge questions in real-time.
+            {% else %}
+              Direct in-suite desk calling and live messaging unlock seamlessly when you are checked in to your room.
+            {% endif %}
+          </p>
+        </div>
+        <div class="tile-footer">
+          {% if is_checked_in %}
+            <a href="{{ url_for('ask_view') }}" class="tile-link-text">
+              <span>Open Desk Portal</span> <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          {% else %}
+            <span style="font-size: 0.8rem; color: var(--color-text-subtle);">
+              <i class="fa-solid fa-circle-info"></i> Unlocks Upon Check-In
+            </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- TILE 4: REQUEST SERVICE (IN-STAY PRIVILEGE) -->
+      <div class="tile-card">
+        <div>
+          <div class="tile-icon-box">
+            <i class="fa-solid fa-bell-concierge"></i>
+          </div>
+          <h3 class="tile-title">
+            <span>Request Service</span>
+            {% if is_checked_in %}
+              <span class="badge-instay-active"><i class="fa-solid fa-sparkles"></i> Available</span>
+            {% else %}
+              <span class="badge-instay-locked" title="Available during your hotel stay"><i class="fa-solid fa-lock"></i> In-Stay Privilege</span>
+            {% endif %}
+          </h3>
+          <p class="tile-desc">
+            {% if is_checked_in %}
+              Order gourmet dishes from our 25-item culinary menu, schedule spa massages, laundry, car rentals, or submit an extraordinary ridiculous request.
+            {% else %}
+              In-room dining and white-glove hotel services are reserved exclusively for guests currently staying with us.
+            {% endif %}
+          </p>
+        </div>
+        <div class="tile-footer">
+          <a href="{{ url_for('services_view') }}" class="tile-link-text">
+            <span>{% if is_checked_in %}Order In-Room Dining{% else %}Preview Service Menu{% endif %}</span> <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- TILE 5: LOYALTY REWARDS -->
+      <div class="tile-card">
+        <div>
+          <div class="tile-icon-box">
+            <i class="fa-solid fa-gem"></i>
+          </div>
+          <h3 class="tile-title">
+            <span>Loyalty Rewards</span>
+            <span class="badge-instay-active"><i class="fa-solid fa-award"></i> Club</span>
+          </h3>
+          <p class="tile-desc">
+            Redeem points earned across room bookings, dining, and spa services for complimentary buffet passes, suite upgrades, and free night stays.
+          </p>
+        </div>
+        <div class="tile-footer">
+          <a href="{{ url_for('rewards_view') }}" class="tile-link-text">
+            <span>Explore Rewards</span> <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- TILE 6: ABOUT THE QUEST -->
+      <div class="tile-card">
+        <div>
+          <div class="tile-icon-box">
+            <i class="fa-solid fa-landmark"></i>
+          </div>
+          <h3 class="tile-title">
+            <span>About The Quest</span>
+            <span class="badge-instay-active"><i class="fa-solid fa-map"></i> Heritage</span>
+          </h3>
+          <p class="tile-desc">
+            Discover the illustrious history of The Quest Hotel, explore our architectural cross-section floorplan map, and review our signature amenities.
+          </p>
+        </div>
+        <div class="tile-footer">
+          <a href="{{ url_for('about_view') }}" class="tile-link-text">
+            <span>Explore Hotel</span> <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     4. THE SACRED OATH BANNER SHOWCASE
+     ========================================================================== -->
+<section class="oath-banner-section">
+  <div class="container">
+    <div class="oath-box">
+      <div class="oath-seal">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <h2 class="oath-quote">
+        "We shall never deny a guest, even the most ridiculous request."
+      </h2>
+      <p class="oath-story">
+        Founded on the timeless philosophy that true hospitality knows no limits, The Quest Hotel pledges itself wholly to fulfilling your every whim. Whether it is a midnight feast delivered to your balcony, twenty plush velvet cushions, or an impromptu candlelit orchestra on your terrace — no request is too eccentric for our staff.
+      </p>
+      <div style="display: flex; justify-content: center; gap: 1.25rem; flex-wrap: wrap;">
+        <a href="{{ url_for('services_view') }}#ridiculous-request" class="btn btn-gold btn-lg">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Make a Ridiculous Request
+        </a>
+        <a href="{{ url_for('rooms_view') }}" class="btn btn-outline-white btn-lg">
+          <i class="fa-solid fa-bed"></i> Reserve Your Stay
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     5. FEATURED SUITES PREVIEW
+     ========================================================================== -->
+<section style="padding: 3rem 0 5rem 0;">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Sanctuary of Refinement</span>
+      <h2 class="section-title">Featured Suites & Penthouses</h2>
+      <p class="section-desc">Handcrafted interiors appointed with the world's most lavish finishes and modern comforts.</p>
+    </div>
+
+    <div class="rooms-grid" style="padding-top: 1rem;">
+      {% for room in featured_rooms %}
+        <div class="room-card">
+          <div class="room-media">
+            <img src="/{{ room.image }}" alt="{{ room.type }}" class="room-media-img" onerror="this.src='/assets/imgs/rooms/standard_ground_king.jpg'">
+            <span class="room-status-badge {{ room.status_badge.lower() }}">{{ room.status_badge }}</span>
+            <span class="room-floor-badge">{{ room.floor }}</span>
+          </div>
+          <div class="room-body">
+            <h3 class="room-title">Suite {{ room.room_number }} • {{ room.type }}</h3>
+            <div class="room-meta-tags">
+              <span><i class="fa-solid fa-user-group"></i> Up to {{ room.packs }} Guests</span>
+              <span><i class="fa-solid fa-bed"></i> {{ room.bed }}</span>
+              <span><i class="fa-solid fa-vector-square"></i> {{ room.size }}</span>
+            </div>
+            <p class="room-desc">{{ room.description }}</p>
+            <div class="room-amenities-chips">
+              {% for amenity in room.amenities[:4] %}
+                <span class="amenity-chip">{{ amenity }}</span>
+              {% endfor %}
+            </div>
+            <div class="room-footer">
+              <div class="room-price-box">
+                <span class="room-price-amt">₱{{ "{:,.2f}".format(room.price_per_night) }}</span>
+                <span class="room-price-unit">per night</span>
+              </div>
+              {% if room.is_available %}
+                <button class="btn btn-gold btn-sm book-room-trigger"
+                        data-room-id="{{ room.id }}"
+                        data-room-number="{{ room.room_number }}"
+                        data-room-type="{{ room.type }}"
+                        data-room-price="{{ room.price_per_night }}"
+                        data-packs="{{ room.packs }}">
+                  <i class="fa-solid fa-calendar-check"></i> Book Suite
+                </button>
+              {% else %}
+                <button class="btn btn-outline-white btn-sm" disabled style="opacity: 0.6; cursor: not-allowed;">
+                  {{ room.status }}
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div style="text-align: center; margin-top: 1rem;">
+      <a href="{{ url_for('rooms_view') }}" class="btn btn-outline-gold btn-lg">
+        <span>View All 17 Suites & Residences</span> <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

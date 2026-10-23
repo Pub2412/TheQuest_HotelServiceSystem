@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Guest Profile & Preferences | The Quest Hotel{% endblock %}
+
+{% block content %}
+
+<section style="padding: 3.5rem 0 5rem 0;">
+  <div class="container">
+    
+    <!-- Profile Header Card -->
+    <div style="background: linear-gradient(135deg, rgba(35, 7, 61, 0.95), rgba(59, 24, 95, 0.85)); border: 1.5px solid var(--color-gold); border-radius: var(--radius-lg); padding: 2.5rem; margin-bottom: 3rem; box-shadow: var(--shadow-card); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2rem;">
+      <div style="display: flex; align-items: center; gap: 1.8rem; flex-wrap: wrap;">
+        <img src="/{{ customer.image_path or 'assets/imgs/customers/f/1.jpg' }}" alt="{{ customer.name }}"
+             style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid var(--color-gold); box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);"
+             onerror="this.src='/assets/imgs/customers/f/1.jpg'">
+        <div>
+          <div class="badge-instay-active" style="margin-bottom: 0.4rem;">
+            <i class="fa-solid fa-crown"></i> 
+            {% set pts = customer.loyalty_points or 0 %}
+            {% if pts >= 2000 %}Royal Diamond Ambassador
+            {% elif pts >= 1000 %}Platinum Elite
+            {% elif pts >= 500 %}Gold VIP
+            {% else %}Silver Member{% endif %}
+          </div>
+          <h1 style="font-family: var(--font-serif); font-size: 2rem; color: #fff; margin-bottom: 0.2rem;">{{ customer.name }}</h1>
+          <div style="font-size: 0.85rem; color: var(--color-champagne); display: flex; gap: 1.2rem; flex-wrap: wrap;">
+            <span><i class="fa-solid fa-envelope"></i> {{ customer.email or 'Not provided' }}</span>
+            <span><i class="fa-solid fa-phone"></i> {{ customer.mobile_number or 'Not provided' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: right;">
+        <div style="font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-champagne);">Accumulated Rewards</div>
+        <div style="font-size: 2.5rem; font-weight: 900; color: var(--color-gold); line-height: 1.1;">{{ "{:,}".format(customer.loyalty_points or 0) }} pts</div>
+        <a href="{{ url_for('rewards_view') }}" class="btn btn-gold btn-sm" style="margin-top: 0.5rem;">
+          <i class="fa-solid fa-gift"></i> Redeem Points
+        </a>
+      </div>
+    </div>
+
+    <!-- Two Column Grid: Left Edit Form & Social Accounts, Right Reservations History -->
+    <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 2.5rem;">
+      
+      <!-- LEFT COLUMN: PROFILE RUD & SOCIAL ACCOUNTS -->
+      <div>
+        <!-- Profile Update Form -->
+        <div style="background: rgba(25, 6, 45, 0.8); border: 1px solid var(--color-card-border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 2rem;">
+          <h3 style="font-family: var(--font-serif); font-size: 1.35rem; color: #fff; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-user-pen" style="color: var(--color-gold);"></i> Update Profile Details
+          </h3>
+
+          <form id="profile-update-form">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input type="text" id="prof-name" class="form-control" value="{{ customer.name }}" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <input type="email" id="prof-email" class="form-control" value="{{ customer.email or '' }}">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Mobile Number</label>
+              <input type="text" id="prof-mobile" class="form-control" value="{{ customer.mobile_number or '' }}">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Change Password (leave blank to keep current)</label>
+              <input type="password" id="prof-password" class="form-control" placeholder="New password">
+            </div>
+
+            <button type="submit" class="btn btn-gold btn-md" style="width: 100%; margin-top: 0.5rem;">
+              <i class="fa-solid fa-floppy-disk"></i> Save Profile Changes
+            </button>
+          </form>
+        </div>
+
+        <!-- Connected Social Accounts -->
+        <div style="background: rgba(25, 6, 45, 0.8); border: 1px solid var(--color-card-border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 2rem;">
+          <h3 style="font-family: var(--font-serif); font-size: 1.35rem; color: #fff; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-link" style="color: var(--color-gold);"></i> Connected Accounts
+          </h3>
+
+          <!-- Google Account -->
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <i class="fa-brands fa-google" style="font-size: 1.4rem; color: #ea4335;"></i>
+              <div>
+                <div style="font-weight: 600; color: #fff;">Google Account</div>
+                <div style="font-size: 0.75rem; color: var(--color-text-subtle);">
+                  {% if customer.google_id %}Connected ({{ customer.google_id }}){% else %}Not connected{% endif %}
+                </div>
+              </div>
+            </div>
+            {% if customer.google_id %}
+              <button class="btn btn-outline-white btn-sm" onclick="toggleSocial('Google', 'disconnect')">Disconnect</button>
+            {% else %}
+              <button class="btn btn-gold btn-sm" onclick="toggleSocial('Google', 'connect')">Connect Google</button>
+            {% endif %}
+          </div>
+
+          <!-- Facebook Account -->
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <i class="fa-brands fa-facebook-f" style="font-size: 1.4rem; color: #1877f2;"></i>
+              <div>
+                <div style="font-weight: 600; color: #fff;">Facebook Account</div>
+                <div style="font-size: 0.75rem; color: var(--color-text-subtle);">
+                  {% if customer.facebook_id %}Connected ({{ customer.facebook_id }}){% else %}Not connected{% endif %}
+                </div>
+              </div>
+            </div>
+            {% if customer.facebook_id %}
+              <button class="btn btn-outline-white btn-sm" onclick="toggleSocial('Facebook', 'disconnect')">Disconnect</button>
+            {% else %}
+              <button class="btn btn-gold btn-sm" onclick="toggleSocial('Facebook', 'connect')">Connect Facebook</button>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Deactivate Account (Delete RUD) -->
+        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 1.5rem;">
+          <h4 style="color: #ef4444; font-size: 1rem; margin-bottom: 0.4rem;">
+            <i class="fa-solid fa-triangle-exclamation"></i> Deactivate Account
+          </h4>
+          <p style="font-size: 0.82rem; color: rgba(255,255,255,0.7); line-height: 1.5; margin-bottom: 1rem;">
+            Permanently remove your customer account and accrued loyalty privileges. This action cannot be undone.
+          </p>
+          <button class="btn btn-sm" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5;" onclick="deactivateAccount()">
+            Deactivate My Account
+          </button>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: RESERVATION HISTORY -->
+      <div>
+        <div style="background: rgba(25, 6, 45, 0.8); border: 1px solid var(--color-card-border); border-radius: var(--radius-md); padding: 2rem;">
+          <h3 style="font-family: var(--font-serif); font-size: 1.35rem; color: #fff; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between;">
+            <span><i class="fa-solid fa-clock-rotate-left" style="color: var(--color-gold);"></i> Reservation History</span>
+            <a href="{{ url_for('rooms_view') }}" class="btn btn-gold btn-sm"><i class="fa-solid fa-plus"></i> New Booking</a>
+          </h3>
+
+          {% if reservations %}
+            <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+              {% for res in reservations %}
+                <div style="background: rgba(14, 2, 26, 0.85); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: var(--radius-sm); padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                  <div style="display: flex; align-items: center; gap: 1rem;">
+                    <img src="/{{ res.image }}" alt="{{ res.room_type }}" style="width: 70px; height: 50px; object-fit: cover; border-radius: 4px;" onerror="this.src='/assets/imgs/rooms/standard_ground_king.jpg'">
+                    <div>
+                      <div style="font-weight: 700; color: #fff; font-size: 1.05rem;">
+                        Suite {{ res.room_number }} • {{ res.room_type }}
+                      </div>
+                      <div style="font-size: 0.78rem; color: var(--color-champagne);">
+                        {{ res.check_in_date }} &rarr; {{ res.check_out_date }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; align-items: center; gap: 1rem;">
+                    {% if res.status == 'Checked In' %}
+                      <span class="badge-instay-active">{{ res.status }}</span>
+                      <button class="btn btn-gold btn-sm extend-stay-trigger">Extend</button>
+                    {% elif res.status == 'Pending' %}
+                      <span class="room-status-badge reserved" style="position: static;">{{ res.status }}</span>
+                    {% else %}
+                      <span class="badge-instay-locked">{{ res.status }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div style="text-align: center; padding: 3rem 1rem; color: rgba(255,255,255,0.6);">
+              <i class="fa-solid fa-calendar-xmark" style="font-size: 2.5rem; color: var(--color-gold); margin-bottom: 0.8rem;"></i>
+              <p>You have no current or past reservations.</p>
+              <a href="{{ url_for('rooms_view') }}" class="btn btn-gold btn-sm" style="margin-top: 1rem;">
+                Explore Suites & Make Reservation
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Profile form submission handler
+document.getElementById('profile-update-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = document.getElementById('prof-name').value.trim();
+  const email = document.getElementById('prof-email').value.trim();
+  const mobile = document.getElementById('prof-mobile').value.trim();
+  const password = document.getElementById('prof-password').value;
+
+  try {
+    const res = await fetch('/api/profile/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, mobile_number: mobile, new_password: password })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert(data.message);
+      window.location.reload();
+    } else {
+      alert(data.message);
+    }
+  } catch (err) {
+    alert('Update error');
+  }
+});
+
+async function toggleSocial(provider, action) {
+  try {
+    const res = await fetch('/api/profile/connect-social', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider, action })
+    });
+    const data = await res.json();
+    alert(data.message);
+    window.location.reload();
+  } catch (err) {
+    alert('Connection error');
+  }
+}
+
+async function deactivateAccount() {
+  const confirmDel = confirm('Are you sure you want to deactivate your Quest customer account? This cannot be undone.');
+  if (!confirmDel) return;
+
+  try {
+    const res = await fetch('/api/profile/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+    alert(data.message);
+    if (data.success) {
+      window.location.href = '/';
+    }
+  } catch (err) {
+    alert('Deactivation error');
+  }
+}
+</script>
+{% endblock %}

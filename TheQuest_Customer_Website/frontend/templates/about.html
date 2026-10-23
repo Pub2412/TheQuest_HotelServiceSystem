@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}About The Quest Hotel & Architectural Map | Five-Star Hospitality{% endblock %}
+
+{% block content %}
+
+<!-- Header Section -->
+<section style="padding: 4rem 0 2rem 0; text-align: center;">
+  <div class="container">
+    <span class="section-tag">A Heritage of Distinction</span>
+    <h1 class="section-title">The Legend of The Quest</h1>
+    <p class="section-desc">
+      Where palatial elegance converges with boundless imagination. Discover our architectural marvel, our storied lineage, and our uncompromising oath to our guests.
+    </p>
+  </div>
+</section>
+
+<!-- The Sacred Creed Story Section -->
+<section style="padding: 2rem 0 4rem 0;">
+  <div class="container">
+    <div style="background: linear-gradient(135deg, rgba(30, 6, 54, 0.9), rgba(59, 24, 95, 0.8)); border: 2px solid var(--color-gold); border-radius: var(--radius-lg); padding: 3.5rem; box-shadow: var(--shadow-card); display: grid; grid-template-columns: 1.2fr 1fr; gap: 3rem; align-items: center;">
+      <div>
+        <span class="section-tag">Our Guiding Principle</span>
+        <h2 style="font-family: var(--font-serif); font-size: 2.2rem; color: #fff; margin-bottom: 1.2rem; line-height: 1.25;">
+          "We Shall Never Deny A Guest, Even The Most Ridiculous Request"
+        </h2>
+        <p style="font-size: 0.95rem; color: var(--color-champagne); line-height: 1.7; margin-bottom: 1.2rem;">
+          In an era where hotels operate under rigid policies and automated replies, The Quest was conceived as an enclave of true discretion and boundless devotion. 
+        </p>
+        <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.8); line-height: 1.7; margin-bottom: 1.5rem;">
+          When an international diplomat requested seventy-two crimson roses floating in their private marble plunge pool at 3:00 AM, our team made it so. When a concert pianist desired a grand piano placed onto their suite balcony under the stars, our engineers lifted it without hesitation. At The Quest, your desires are not exceptions — they are our purpose.
+        </p>
+        <a href="{{ url_for('services_view') }}#ridiculous-request" class="btn btn-gold btn-md">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Experience The Ridiculous Request
+        </a>
+      </div>
+
+      <div style="text-align: center; background: rgba(14, 2, 26, 0.75); border: 1.5px solid var(--color-gold-border); border-radius: var(--radius-md); padding: 2.5rem;">
+        <img src="/assets/imgs/logo/logotitle.png" alt="The Quest Crest" style="max-height: 140px; margin: 0 auto 1.5rem auto; filter: drop-shadow(0 0 25px rgba(245, 158, 11, 0.4));">
+        <h3 style="font-family: var(--font-serif); font-size: 1.4rem; color: #fff; margin-bottom: 0.4rem;">The Quest Crest</h3>
+        <p style="font-size: 0.82rem; color: var(--color-champagne); font-style: italic;">
+          Symbolizing Unyielding Devotion, Imperial Nobility, and Sovereign Comfort.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Architectural Hotel Map Section -->
+<section style="padding: 4rem 0; background: rgba(14, 2, 26, 0.6); border-top: 1px solid rgba(245, 158, 11, 0.15); border-bottom: 1px solid rgba(245, 158, 11, 0.15);">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Architectural Cross-Section</span>
+      <h2 class="section-title">The Quest Hotel Layout & Map</h2>
+      <p class="section-desc">
+        Explore the 5 levels of our royal hotel cross-section, from the Ground Reception to the 5th Floor Presidential Penthouse.
+      </p>
+    </div>
+
+    <!-- Hotel Map Image Container -->
+    <div style="background: rgba(20, 4, 35, 0.9); border: 2px solid var(--color-gold); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg); margin-bottom: 3rem; text-align: center;">
+      <img src="/assets/imgs/HotelMap.jpg" alt="The Quest Hotel Map" style="width: 100%; max-height: 620px; object-fit: contain; margin: 0 auto; background: #000;" onerror="this.src='/assets/imgs/promotions/promo1.jpg'">
+      <div style="padding: 1.25rem; background: rgba(14, 2, 26, 0.95); border-top: 1px solid var(--color-gold-border); font-size: 0.88rem; color: var(--color-champagne);">
+        <i class="fa-solid fa-layer-group" style="color: var(--color-gold);"></i> Full Hotel Cross-Sectional Diagram • Levels 1 through 5
+      </div>
+    </div>
+
+    <!-- Floor-by-Floor Directory -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
+      <div style="background: rgba(30, 6, 54, 0.8); border: 1px solid var(--color-card-border); border-radius: var(--radius-md); padding: 1.5rem;">
+        <span class="section-tag" style="font-size: 0.72rem;">Level 1</span>
+        <h4 style="font-family: var(--font-serif); font-size: 1.15rem; color: #fff; margin-bottom: 0.4rem;">Ground Level</h4>
+        <p style="font-size: 0.82rem; color: rgba(255,255,255,0.7); line-height: 1.5;">
+          Grand Reception Lobby, Concierge Lounge, Standard Ground Suites (King, Twin, Queen), and Courtyard Dining.
+        </p>
+      </div>
+
+      <div style="background: rgba(30, 6, 54, 0.8); border: 1px solid var(--color-card-border); border-radius: var(--radius-md); padding: 1.5rem;">
+        <span class="section-tag" style="font-size: 0.72rem;">Level 2</span>
+        <h4 style="font-family: var(--font-serif); font-size: 1.15rem; color: #fff; margin-bottom: 0.4rem;">Deluxe Courtyard</h4>
+        <p style="font-size: 0.82rem; color: rgba(255,255,255,0.7); line-height: 1.5;">
+          Deluxe Suites (King, Twin, Queen), The Royal Spa Wellness Center, and Zen Relaxation Gardens.
+        </p>
+      </div>
+
+      <div style="background: rgba(30, 6, 54, 0.8); border: 1px solid var(--color-card-border); border-radius: var(--radius-md); padding: 1.5rem;">
+        <span class="section-tag" style="font-size: 0.72rem;">Level 3</span>
+        <h4 style="font-family: var(--font-serif); font-size: 1.15rem; color: #fff; margin-bottom: 0.4rem;">Deluxe Balcony</h4>
+        <p style="font-size: 0.82rem; color: rgba(255,255,255,0.7); line-height: 1.5;">
+          Deluxe Balcony Suites (King, Twin, Queen), Open-Air Terrace Bar, and Infinity Plunge Pool.
+        </p>
+      </div>
+
+      <div style="background: rgba(30, 6, 54, 0.8); border: 1px solid var(--color-card-border); border-radius: var(--radius-md); padding: 1.5rem;">
+        <span class="section-tag" style="font-size: 0.72rem;">Level 4</span>
+        <h4 style="font-family: var(--font-serif); font-size: 1.15rem; color: #fff; margin-bottom: 0.4rem;">Executive Royal</h4>
+        <p style="font-size: 0.82rem; color: rgba(255,255,255,0.7); line-height: 1.5;">
+          Executive Suites (King, Twin, Queen), Private Executive Meeting Parlors, and Evening Canapés Lounge.
+        </p>
+      </div>
+
+      <div style="background: rgba(30, 6, 54, 0.8); border: 1.5px solid var(--color-gold); border-radius: var(--radius-md); padding: 1.5rem;">
+        <span class="section-tag" style="font-size: 0.72rem; color: var(--color-gold);">Level 5</span>
+        <h4 style="font-family: var(--font-serif); font-size: 1.15rem; color: #fff; margin-bottom: 0.4rem;">Penthouse & VIP</h4>
+        <p style="font-size: 0.82rem; color: rgba(255,255,255,0.7); line-height: 1.5;">
+          Penthouse Presidential Suite, Royal Panorama Suite, Imperial Skylounge, and 24/7 Butler Quarters.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Signature Hotel Amenities -->
+<section style="padding: 5rem 0;">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">World-Class Facilities</span>
+      <h2 class="section-title">Signature Amenities & Inclusions</h2>
+      <p class="section-desc">Every element is meticulously curated to surround you in timeless indulgence.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;">
+      <div class="tile-card">
+        <div class="tile-icon-box"><i class="fa-solid fa-water-ladder"></i></div>
+        <h3 class="tile-title">Grand Heated Infinity Pool</h3>
+        <p class="tile-desc">A crystalline heated pool overlooking scenic tropical vistas with private curtained cabanas and poolside champagne service.</p>
+      </div>
+
+      <div class="tile-card">
+        <div class="tile-icon-box"><i class="fa-solid fa-spa"></i></div>
+        <h3 class="tile-title">The Royal Spa Sanctuary</h3>
+        <p class="tile-desc">Bespoke botanical treatments, heated Himalayan stone massage, herbal steam chambers, and private jacuzzi relaxation suites.</p>
+      </div>
+
+      <div class="tile-card">
+        <div class="tile-icon-box"><i class="fa-solid fa-car-side"></i></div>
+        <h3 class="tile-title">Private Chauffeur Fleet</h3>
+        <p class="tile-desc">Seamless luxury transport with private chauffeurs available for airport transfers, city excursions, and executive travel.</p>
+      </div>
+
+      <div class="tile-card">
+        <div class="tile-icon-box"><i class="fa-solid fa-utensils"></i></div>
+        <h3 class="tile-title">24/7 Haute In-Room Dining</h3>
+        <p class="tile-desc">Gourmet culinary masterworks prepared fresh by Chef Marcus Sterling and culinary brigade, delivered to your residence any hour.</p>
+      </div>
+
+      <div class="tile-card">
+        <div class="tile-icon-box"><i class="fa-solid fa-bell-concierge"></i></div>
+        <h3 class="tile-title">24/7 White-Glove Butler</h3>
+        <p class="tile-desc">Personalized butler service providing wardrobe pressing, unpacking, customized dining arrangements, and turndown rituals.</p>
+      </div>
+
+      <div class="tile-card">
+        <div class="tile-icon-box"><i class="fa-solid fa-wifi"></i></div>
+        <h3 class="tile-title">Gigabit Fiber & Smart Audio</h3>
+        <p class="tile-desc">Unlimited high-speed private fiber optic Wi-Fi, Bang & Olufsen sound systems, 4K OLED televisions, and in-room digital controls.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

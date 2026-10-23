@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Ask Front Desk & Concierge | The Quest Hotel{% endblock %}
+
+{% block content %}
+
+<section style="padding: 3.5rem 0 5rem 0;">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">24/7 White-Glove Assistance</span>
+      <h1 class="section-title">Front Desk & Concierge Calling</h1>
+      <p class="section-desc">
+        Our dedicated guest relations team and head concierge are at your continuous service to address any inquiry or request.
+      </p>
+    </div>
+
+    {% if is_checked_in and active_stay %}
+      <!-- CHECKED-IN INTERACTIVE CHAT & CALL PORTAL -->
+      <div class="chat-container-box">
+        
+        <!-- Sidebar with Extensions & Instant Callback -->
+        <div class="chat-sidebar">
+          <div>
+            <div class="desk-status-card">
+              <div style="font-size: 0.75rem; color: #34d399; font-weight: 700; text-transform: uppercase; margin-bottom: 0.3rem;">
+                <span class="live-indicator"></span> Front Desk Active
+              </div>
+              <div style="font-family: var(--font-serif); font-size: 1.15rem; color: #fff;">
+                Suite {{ active_stay.room_number }} In-Room Portal
+              </div>
+              <div style="font-size: 0.8rem; color: var(--color-champagne); margin-top: 0.2rem;">
+                Guest: <strong>{{ current_user.name }}</strong>
+              </div>
+            </div>
+
+            <h4 style="font-family: var(--font-serif); font-size: 0.95rem; color: var(--color-champagne); margin-bottom: 0.8rem;">
+              Hotel Telephone Directory
+            </h4>
+            <div style="font-size: 0.82rem; color: rgba(255,255,255,0.75); display: flex; flex-direction: column; gap: 0.6rem;">
+              <div style="display: flex; justify-content: space-between;">
+                <span>Front Reception:</span> <strong style="color: var(--color-gold);">Dial 0</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Chief Concierge:</span> <strong style="color: var(--color-gold);">Dial 1</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>In-Room Dining:</span> <strong style="color: var(--color-gold);">Dial 2</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Housekeeping & Linens:</span> <strong style="color: var(--color-gold);">Dial 3</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Royal Spa Wellness:</span> <strong style="color: var(--color-gold);">Dial 4</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Instant Callback Button -->
+          <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.2rem;">
+            <p style="font-size: 0.78rem; color: var(--color-text-subtle); margin-bottom: 0.75rem;">
+              Need verbal assistance? Request an immediate phone callback to your suite phone.
+            </p>
+            <button type="button" class="btn btn-gold btn-sm" id="request-callback-btn" style="width: 100%;">
+              <i class="fa-solid fa-phone-arrow-down-left"></i> Request Desk Callback
+            </button>
+          </div>
+        </div>
+
+        <!-- Chat Conversation Area -->
+        <div class="chat-main-panel">
+          <div class="chat-header">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <div style="width: 38px; height: 38px; border-radius: 50%; background: var(--color-gold); display: flex; align-items: center; justify-content: center; color: #120320; font-size: 1rem;">
+                <i class="fa-solid fa-bell-concierge"></i>
+              </div>
+              <div>
+                <div style="font-family: var(--font-serif); font-size: 1.05rem; font-weight: 700; color: #fff;">The Quest Concierge Desk</div>
+                <div style="font-size: 0.75rem; color: #34d399;"><span class="live-indicator"></span> Attendant Eleanor Vance on duty</div>
+              </div>
+            </div>
+            
+            <div style="font-size: 0.75rem; color: var(--color-champagne); font-style: italic;">
+              "We shall never deny a guest, even the most ridiculous request"
+            </div>
+          </div>
+
+          <!-- Message History Thread -->
+          <div class="chat-messages-area" id="chat-messages-box">
+            <!-- Initial Welcome Message from Staff -->
+            <div class="chat-bubble staff">
+              <div>Good day, {{ current_user.name }}! Welcome to Suite {{ active_stay.room_number }}. How may our front desk or concierge assist you today?</div>
+              <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 0.3rem;">Front Desk</div>
+            </div>
+
+            <!-- Historical Inquiries -->
+            {% for inq in inquiries %}
+              <div class="chat-bubble customer">
+                <div>{{ inq.message }}</div>
+                <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 0.3rem;">{{ inq.created_at }}</div>
+              </div>
+              {% if inq.response %}
+                <div class="chat-bubble staff">
+                  <div>{{ inq.response }}</div>
+                  <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 0.3rem;">{{ inq.department }}</div>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <!-- Message Input Bar -->
+          <form class="chat-input-bar" id="concierge-chat-form">
+            <select id="chat-dept-select" class="form-control" style="width: 170px; padding: 0.5rem 0.8rem; font-size: 0.85rem;">
+              <option value="Front Desk">Front Desk</option>
+              <option value="Chief Concierge">Chief Concierge</option>
+              <option value="Housekeeping">Housekeeping</option>
+              <option value="In-Room Dining">In-Room Dining</option>
+              <option value="Duty Manager">Duty Manager</option>
+            </select>
+            <input type="text" id="chat-message-input" class="chat-input-field" placeholder="Ask a question or request service..." required autocomplete="off">
+            <button type="submit" class="btn btn-gold btn-sm" style="padding: 0 1.4rem;">
+              <i class="fa-solid fa-paper-plane"></i> Send
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+    {% else %}
+      <!-- VISITORS / NON-CHECKED IN VIEW -->
+      <div style="max-width: 860px; margin: 0 auto;">
+        <div style="background: rgba(30, 6, 54, 0.8); border: 1.5px solid var(--color-card-border); border-radius: var(--radius-lg); padding: 3rem; text-align: center; margin-bottom: 3rem;">
+          <i class="fa-solid fa-headset" style="font-size: 3rem; color: var(--color-gold); margin-bottom: 1rem;"></i>
+          <h2 style="font-family: var(--font-serif); font-size: 1.8rem; color: #fff; margin-bottom: 0.75rem;">
+            Direct Concierge Desk Calling
+          </h2>
+          <p style="font-size: 0.95rem; color: var(--color-champagne); max-width: 600px; margin: 0 auto 1.5rem auto; line-height: 1.6;">
+            Direct suite telephone calling, live chat messaging to housekeeping, kitchen, and duty manager activate automatically when you check in to your suite.
+          </p>
+          <div style="display: flex; justify-content: center; gap: 1rem;">
+            <a href="{{ url_for('rooms_view') }}" class="btn btn-gold btn-md">
+              <i class="fa-solid fa-bed"></i> Book a Suite to Check In
+            </a>
+            <a href="tel:+6328888QUEST" class="btn btn-outline-white btn-md">
+              <i class="fa-solid fa-phone"></i> Call Central Reservations
+            </a>
+          </div>
+        </div>
+
+        <!-- Frequently Asked Questions -->
+        <h3 style="font-family: var(--font-serif); font-size: 1.5rem; color: #fff; margin-bottom: 1.5rem; text-align: center;">
+          Guest Frequently Asked Questions
+        </h3>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div style="background: rgba(25, 6, 45, 0.7); border: 1px solid var(--color-card-border); padding: 1.5rem; border-radius: var(--radius-md);">
+            <h4 style="color: var(--color-champagne); font-size: 1.05rem; margin-bottom: 0.4rem;">What are the standard check-in and check-out times?</h4>
+            <p style="font-size: 0.88rem; color: rgba(255,255,255,0.75); line-height: 1.5;">
+              Check-in commences at 2:00 PM and check-out is at 12:00 PM (noon). Early check-in and late departures may be arranged through your in-room portal or by contacting the concierge.
+            </p>
+          </div>
+
+          <div style="background: rgba(25, 6, 45, 0.7); border: 1px solid var(--color-card-border); padding: 1.5rem; border-radius: var(--radius-md);">
+            <h4 style="color: var(--color-champagne); font-size: 1.05rem; margin-bottom: 0.4rem;">What is the policy regarding "The Ridiculous Request"?</h4>
+            <p style="font-size: 0.88rem; color: rgba(255,255,255,0.75); line-height: 1.5;">
+              Our founding oath states: <em>"We shall never deny a guest, even the most ridiculous request."</em> From customized midnight banquets to unusual room staging, our concierge team will enthusiastically fulfill your needs provided they remain lawful and safe.
+            </p>
+          </div>
+
+          <div style="background: rgba(25, 6, 45, 0.7); border: 1px solid var(--color-card-border); padding: 1.5rem; border-radius: var(--radius-md);">
+            <h4 style="color: var(--color-champagne); font-size: 1.05rem; margin-bottom: 0.4rem;">Can I extend my stay while currently checked in?</h4>
+            <p style="font-size: 0.88rem; color: rgba(255,255,255,0.75); line-height: 1.5;">
+              Yes! Currently checked-in guests can extend their stay by 1 to 7 nights directly from the Home or Profile page with instant card or room folio billing.
+            </p>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+</section>
+
+{% endblock %}

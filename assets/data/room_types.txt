@@ -1,0 +1,21 @@
+THE QUEST HOTEL
+ROOM TYPES
+==========
+
+01. Standard Ground King
+02. Standard Ground Twin
+03. Standard Ground Queen
+04. Deluxe Twin
+05. Deluxe King
+06. Deluxe Queen
+07. Deluxe Balcony King
+08. Deluxe Balcony Twin
+09. Deluxe Balcony Queen
+10. Executive Suite King
+11. Executive Suite Twin
+12. Executive Suite Queen
+13. Penthouse Presidential Suite
+14. Royal Panorama Suite
+15. Crown Luxury Suite
+16. Executive Horizon Suite
+17. Imperial Skylounge Suite
