@@ -32,7 +32,7 @@ from utils.theme import (
     SYSTEM_NAME, SYSTEM_SUBTITLE, SYSTEM_SLOGAN
 )
 from utils.image_loader import load_image, get_icon_logo
-from utils.components import MetricCard, HotelMapWidget, PhoneCallModal
+from utils.components import MetricCard, HotelMapWidget, PhoneCallModal, add_table_filter
 from utils.logger import log_auth_event
 
 class CashierPage(tk.Frame):
@@ -301,7 +301,10 @@ class CashierPage(tk.Frame):
                     r["mobile_number"], r["check_in_date"], r["check_out_date"],
                     nights, f"₱{total_est:,.0f}", st
                 ), tags=tag)
+            if "refresh_reservation_filter" in locals():
+                refresh_reservation_filter()
 
+        refresh_reservation_filter = add_table_filter(table_card, tree)
         load_reservations("All")
         tree.pack(fill="both", expand=True)
 
@@ -329,6 +332,7 @@ class CashierPage(tk.Frame):
 
             messagebox.showinfo("Check-In Complete", f"Reservation #{res_id} is now Checked In. Room keycard issued!")
             load_reservations(stat_var.get())
+            refresh_reservation_filter()
 
         tk.Button(
             act_f,
@@ -733,7 +737,9 @@ class CashierPage(tk.Frame):
                     f"{c['loyalty_points'] or 0} pts", stay_txt
                 ))
 
+        refresh_customer_filter = add_table_filter(table_card, tree)
         load_c()
+        refresh_customer_filter()
         tree.pack(fill="both", expand=True)
 
         # Call Guest button

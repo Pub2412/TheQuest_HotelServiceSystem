@@ -38,7 +38,7 @@ from utils.theme import (
     SYSTEM_NAME, SYSTEM_SUBTITLE, SYSTEM_SLOGAN
 )
 from utils.image_loader import load_image, get_icon_logo
-from utils.components import MetricCard, HotelMapWidget, PhoneCallModal
+from utils.components import MetricCard, HotelMapWidget, PhoneCallModal, add_table_filter
 from utils.pdf_exporter import generate_hotel_pdf_report
 from utils.logger import read_decrypted_auth_logs, read_system_health_logs, log_auth_event
 
@@ -577,6 +577,7 @@ class AdminPage(tk.Frame):
                 "Active Stay"
             ))
 
+        add_table_filter(table_card, tree)()
         tree.pack(fill="both", expand=True)
 
     # =========================================================================
@@ -671,7 +672,13 @@ class AdminPage(tk.Frame):
                     status_txt
                 ), tags=tag)
 
-        populate_inv("All")
+        refresh_inventory_filter = add_table_filter(table_card, tree)
+        original_populate_inv = populate_inv
+        def populate_inv_with_filter(cat_filter):
+            original_populate_inv(cat_filter)
+            refresh_inventory_filter()
+        populate_inv = populate_inv_with_filter
+        populate_inv(cat_var.get())
         tree.pack(fill="both", expand=True)
 
         # Bottom Restock Action Bar
@@ -959,7 +966,9 @@ class AdminPage(tk.Frame):
                 tree.focus(children[0])
                 on_staff_select(None)
 
+        refresh_staff_filter = add_table_filter(left_table_f, tree)
         load_staff()
+        refresh_staff_filter()
         tree.pack(fill="both", expand=True)
 
         # Action Buttons
@@ -1021,6 +1030,7 @@ class AdminPage(tk.Frame):
                 conn.execute("UPDATE users SET is_active = CASE WHEN is_active=1 THEN 0 ELSE 1 END WHERE id = ?", (user_id,))
                 conn.commit()
             load_staff()
+            refresh_staff_filter()
 
         tk.Button(
             btn_f,
@@ -1212,7 +1222,9 @@ class AdminPage(tk.Frame):
                     f"{pts:,} pts", tier
                 ))
 
+        refresh_customer_filter = add_table_filter(table_card, tree)
         load_customers()
+        refresh_customer_filter()
         tree.pack(fill="both", expand=True)
 
         # Action Buttons
@@ -1343,7 +1355,9 @@ class AdminPage(tk.Frame):
                     r["id"], r["reward_name"], f"{r['points_required']} pts", r["description"]
                 ))
 
+        refresh_reward_filter = add_table_filter(table_card, tree)
         load_rewards()
+        refresh_reward_filter()
         tree.pack(fill="both", expand=True)
 
         # Actions

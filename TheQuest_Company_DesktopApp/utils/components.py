@@ -28,6 +28,104 @@ from .theme import (
 )
 from .image_loader import load_image, get_hotel_map_image
 
+
+def add_table_filter(parent, tree, columns=None):
+    """Add a live text filter and column selector above a Treeview.
+
+    The filter only hides existing rows, so it remains compatible with the
+    page-specific loaders and does not alter the underlying database query.
+    Call the returned ``refresh`` function after repopulating the Treeview.
+    """
+    columns = columns or list(tree["columns"])
+    filter_frame = tk.Frame(parent, bg=COLOR_WHITE)
+    filter_frame.pack(fill="x", pady=(0, 8))
+
+    tk.Label(
+        filter_frame,
+        text="Search:",
+        font=(FONT_FAMILY, 9, "bold"),
+        fg=COLOR_TEXT_MUTED,
+        bg=COLOR_WHITE
+    ).pack(side="left")
+
+    search_var = tk.StringVar()
+    search_entry = tk.Entry(
+        filter_frame,
+        textvariable=search_var,
+        font=FONT_SMALL,
+        width=24,
+        relief="solid",
+        bd=1
+    )
+    search_entry.pack(side="left", padx=(6, 10), ipady=3)
+
+    column_labels = ["All columns"] + [
+        tree.heading(column, "text") or column for column in columns
+    ]
+    column_var = tk.StringVar(value=column_labels[0])
+    column_menu = ttk.Combobox(
+        filter_frame,
+        textvariable=column_var,
+        values=column_labels,
+        state="readonly",
+        width=18,
+        font=FONT_SMALL
+    )
+    column_menu.pack(side="left", padx=(0, 8))
+
+    all_items = []
+
+    def refresh():
+        for item_id in all_items:
+            if tree.exists(item_id):
+                tree.reattach(item_id, "", "end")
+        all_items[:] = list(tree.get_children(""))
+        apply_filter()
+
+    def apply_filter(*_):
+        query = search_var.get().strip().casefold()
+        selected_column = column_var.get()
+        selected_index = (
+            column_labels.index(selected_column) - 1
+            if selected_column != "All columns" else None
+        )
+
+        for item_id in all_items:
+            values = tree.item(item_id, "values")
+            haystack = (
+                values[selected_index] if selected_index is not None
+                and selected_index < len(values)
+                else " ".join(str(value) for value in values)
+            )
+            matches = not query or query in str(haystack).casefold()
+            if matches:
+                tree.reattach(item_id, "", "end")
+            else:
+                tree.detach(item_id)
+
+    search_var.trace_add("write", apply_filter)
+    column_menu.bind("<<ComboboxSelected>>", apply_filter)
+
+    def clear_filter():
+        search_var.set("")
+        column_var.set(column_labels[0])
+        apply_filter()
+
+    tk.Button(
+        filter_frame,
+        text="Clear",
+        font=FONT_SMALL_BOLD,
+        bg=COLOR_PRIMARY_TINT,
+        fg=COLOR_PRIMARY,
+        relief="flat",
+        padx=8,
+        pady=3,
+        cursor="hand2",
+        command=clear_filter
+    ).pack(side="left")
+
+    return refresh
+
 class PhoneCallModal(tk.Toplevel):
     """
     Realistic interactive Softphone Call Dialog for calling employees or customers.

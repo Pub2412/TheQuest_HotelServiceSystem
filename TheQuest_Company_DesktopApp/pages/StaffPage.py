@@ -31,7 +31,7 @@ from utils.theme import (
     SYSTEM_NAME, SYSTEM_SUBTITLE, SYSTEM_SLOGAN
 )
 from utils.image_loader import load_image, get_icon_logo
-from utils.components import MetricCard, HotelMapWidget, PhoneCallModal
+from utils.components import MetricCard, HotelMapWidget, PhoneCallModal, add_table_filter
 from utils.logger import log_auth_event
 
 LOGISTICS_AUTH_CODE = "QUEST-LOG-2026"
@@ -306,7 +306,9 @@ class StaffPage(tk.Frame):
                     o["details"], st, date_str
                 ), tags=tag)
 
+        refresh_orders_filter = add_table_filter(orders_card, tree_orders)
         load_orders()
+        refresh_orders_filter()
         tree_orders.pack(fill="both", expand=True)
 
         # Action Buttons for Food Orders
@@ -358,6 +360,7 @@ class StaffPage(tk.Frame):
                 conn.commit()
             messagebox.showinfo("Order Complete", f"Order #{order_id} has been marked as Complete!")
             load_orders()
+            refresh_orders_filter()
 
         tk.Button(
             act_f,
@@ -407,6 +410,7 @@ class StaffPage(tk.Frame):
                 ki["low_stock_threshold"], st_txt
             ), tags=tag)
 
+        add_table_filter(inv_card, tree_inv)()
         tree_inv.pack(fill="both", expand=True)
 
     # =========================================================================
@@ -644,7 +648,9 @@ class StaffPage(tk.Frame):
                     t["request_type"], t["details"], st, "Full Swing Daily"
                 ), tags=tag)
 
+        refresh_tasks_filter = add_table_filter(f_tasks, tree)
         load_tasks()
+        refresh_tasks_filter()
         tree.pack(fill="both", expand=True)
 
         # Action Buttons
@@ -667,6 +673,7 @@ class StaffPage(tk.Frame):
 
             messagebox.showinfo("Task Updated", f"Task #{t_id} marked as '{new_state}'!")
             load_tasks()
+            refresh_tasks_filter()
 
         tk.Button(btn_bar, text="✓ Mark Task Complete", font=(FONT_FAMILY, 9, "bold"), bg=COLOR_SUCCESS, fg=COLOR_WHITE, relief="flat", padx=10, pady=5, command=lambda: update_task_state("Complete")).pack(side="left", padx=4)
         tk.Button(btn_bar, text="⏳ Set Processing", font=(FONT_FAMILY, 9), bg=COLOR_WARNING, fg=COLOR_TEXT_DARK, relief="flat", padx=10, pady=5, command=lambda: update_task_state("Processing")).pack(side="left", padx=4)
