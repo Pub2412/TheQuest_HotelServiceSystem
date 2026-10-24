@@ -553,5 +553,6 @@ def api_softphone_contacts():
 # ==============================================================================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5001))
-    print(f"[The Quest Mobile App] Server online on http://0.0.0.0:{port}")
-    app.run(host="0.0.0.0", port=port, debug=False)
+    host = os.environ.get("HOST", "0.0.0.0")
+    print(f"[The Quest Mobile App] Server online on http://{host}:{port}")
+    app.run(host=host, port=port, debug=False)

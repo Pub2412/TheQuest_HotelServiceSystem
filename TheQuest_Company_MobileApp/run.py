@@ -9,6 +9,7 @@ import time
 import socket
 import webbrowser
 import threading
+import os
 from pathlib import Path
 
 CURRENT_DIR = Path(__file__).resolve().parent
@@ -74,6 +75,7 @@ def verify_environment(port: int):
     local_ip = get_local_ip()
     print("-" * 72)
     print(f"  Local Computer Access:  http://127.0.0.1:{port}")
+    print(f"  Pixel 6 Emulator:      http://10.0.2.2:{port}")
     print(f"  Mobile Phone / Wi-Fi:   http://{local_ip}:{port}")
     print("-" * 72)
     print("  Demo Logins: admin/admin123 • cashier/cashier123 • kitchen/kitchen123")
@@ -82,7 +84,7 @@ def verify_environment(port: int):
 
 
 def main():
-    port = 5001
+    port = int(os.environ.get("PORT", "5001"))
     verify_environment(port)
 
     # Launch browser in background thread
