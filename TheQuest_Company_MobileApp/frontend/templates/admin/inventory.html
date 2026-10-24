@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory & Restock • {{ system_name }}{% endblock %}
+
+{% block portal_title %}📦 Inventory Operations & Restock{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+  <div>
+    <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--primary);">Inventory & Supplies</h2>
+    <p style="font-size: 0.72rem; color: var(--text-muted);">Stock level tracking & restock requisitions</p>
+  </div>
+</div>
+
+<!-- Category Filter Pills -->
+<div class="floor-filter-pills">
+  <a href="{{ url_for('admin_inventory', category='All') }}" class="pill-btn {% if current_category == 'All' %}active{% endif %}">
+    All Items
+  </a>
+  <a href="{{ url_for('admin_inventory', category='Kitchen') }}" class="pill-btn {% if current_category == 'Kitchen' %}active{% endif %}">
+    🍳 Kitchen Ingredients
+  </a>
+  <a href="{{ url_for('admin_inventory', category='Utility') }}" class="pill-btn {% if current_category == 'Utility' %}active{% endif %}">
+    🧹 Housekeeping & Utilities
+  </a>
+</div>
+
+<!-- Inventory Items List -->
+<div style="display: flex; flex-direction: column; gap: 10px;">
+  {% for item in items %}
+    <div class="app-card" style="margin-bottom: 0; {% if item.is_low %}border-left: 4px solid var(--danger);{% endif %}">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <div style="font-size: 0.95rem; font-weight: 800; color: var(--primary);">
+            {{ item.item_name }}
+          </div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+            Category: {{ item.category }} • Unit: {{ item.unit }}
+          </div>
+        </div>
+
+        {% if item.is_low %}
+          <span class="badge badge-occupied">⚠️ Low Stock</span>
+        {% else %}
+          <span class="badge badge-vacant">In Stock</span>
+        {% endif %}
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border);">
+        <div>
+          <div style="font-size: 0.7rem; color: var(--text-muted);">CURRENT STOCK</div>
+          <div style="font-size: 1.15rem; font-weight: 800; color: {% if item.is_low %}var(--danger){% else %}var(--primary){% endif %};">
+            {{ item.quantity }} <span style="font-size: 0.8rem; font-weight: normal;">{{ item.unit }}</span>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size: 0.7rem; color: var(--text-muted);">UNIT COST</div>
+          <div style="font-size: 0.9rem; font-weight: 700; color: var(--text-normal);">
+            PHP {{ "{:,.2f}".format(item.cost_per_unit) }}
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-sm btn-primary" onclick="openRestockModal('{{ item.id }}', '{{ item.item_name }}', '{{ item.unit }}', '{{ item.cost_per_unit }}')">
+          ➕ Restock
+        </button>
+      </div>
+    </div>
+  {% else %}
+    <p style="text-align: center; color: var(--text-muted); padding: 20px;">No inventory items found.</p>
+  {% endfor %}
+</div>
+
+<!-- Restock Bottom Sheet Modal -->
+<div id="restock-sheet" class="bottom-sheet-backdrop">
+  <div class="bottom-sheet-content">
+    <div class="sheet-handle"></div>
+    <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary); margin-bottom: 4px;">
+      Restock Inventory Item
+    </h3>
+    <p id="restock-item-name" style="font-size: 0.82rem; color: var(--accent-text); font-weight: 700; margin-bottom: 14px;">
+      Item Name
+    </p>
+
+    <form method="POST" action="{{ url_for('admin_inventory') }}">
+      <input type="hidden" id="restock-item-id" name="item_id">
+
+      <div class="form-group">
+        <label for="added-qty">Units to Add *</label>
+        <input type="number" id="added-qty" name="added_qty" class="form-control" min="1" value="10" required>
+      </div>
+
+      <div class="form-group">
+        <label for="unit-cost">Unit Cost (PHP) *</label>
+        <input type="number" id="unit-cost" name="unit_cost" class="form-control" step="0.5" min="0" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
+        Confirm Restock & Record Expense
+      </button>
+
+      <button type="button" class="btn btn-outline" onclick="closeSheet('restock-sheet')" style="margin-top: 8px;">
+        Cancel
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openRestockModal(id, name, unit, cost) {
+  document.getElementById("restock-item-id").value = id;
+  document.getElementById("restock-item-name").textContent = name + " (per " + unit + ")";
+  document.getElementById("unit-cost").value = cost;
+  openSheet("restock-sheet");
+}
+</script>
+{% endblock %}

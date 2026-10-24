@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Sign In • {{ system_name }}{% endblock %}
+
+{% block portal_title %}🔒 Authentication Checkpoint{% endblock %}
+
+{% block content %}
+<div style="max-width: 420px; margin: 0 auto; padding-top: 10px;">
+
+  <!-- Branding Card -->
+  <div class="app-card" style="text-align: center; background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; border-color: var(--accent);">
+    <img src="/assets/imgs/logo/crest.png" alt="{{ system_name }}" style="width: 80px; height: 80px; margin-bottom: 8px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));" onerror="this.style.display='none'">
+    <h2 style="font-size: 1.35rem; font-weight: 800; letter-spacing: 0.5px; color: white;">{{ system_name }}</h2>
+    <p style="font-size: 0.8rem; color: var(--primary-tint); margin-bottom: 8px;">{{ system_subtitle }}</p>
+    <div style="height: 2px; width: 60px; background: var(--accent); margin: 0 auto 10px auto;"></div>
+    <p style="font-size: 0.75rem; font-style: italic; color: var(--accent-light); padding: 0 10px;">
+      "{{ system_slogan }}"
+    </p>
+  </div>
+
+  <!-- Sign In Form Card -->
+  <div class="app-card">
+    <div style="margin-bottom: 14px;">
+      <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary);">Staff Mobile Sign In</h3>
+      <p style="font-size: 0.78rem; color: var(--text-muted);">Authenticate with your employee credentials.</p>
+    </div>
+
+    <!-- Security Lockout Banner (Dynamic countdown) -->
+    {% if lockout_secs and lockout_secs > 0 %}
+      <div id="lockout-banner" class="flash-alert danger" data-seconds="{{ lockout_secs }}" style="font-weight: 700;">
+        ⚠️ System locked due to 3 failed attempts. Try again in {{ lockout_secs }}s.
+      </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('login_view') }}">
+      <div class="form-group">
+        <label for="input-username">Username or Staff ID</label>
+        <input type="text" id="input-username" name="username" class="form-control" placeholder="e.g. admin or cashier" value="{{ username or '' }}" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label for="input-password">Password</label>
+        <input type="password" id="input-password" name="password" class="form-control" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" id="btn-login-submit" class="btn btn-primary" style="margin-top: 6px;">
+        <span>🔐</span> Sign In to Mobile System
+      </button>
+    </form>
+
+    <div style="margin-top: 14px; text-align: center;">
+      <a href="{{ url_for('register_view') }}" style="font-size: 0.8rem; color: var(--primary); font-weight: 600; text-decoration: none;">
+        Need an internal staff account? <span style="text-decoration: underline; color: var(--accent-text);">Register here</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Demo Credentials Quick Shortcut Chips -->
+  <div class="app-card" style="background: var(--accent-light); border-color: rgba(245, 158, 11, 0.4);">
+    <div style="font-size: 0.78rem; font-weight: 800; color: var(--accent-text); margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+      <span>⚡</span> QUICK DEMO SHORTCUTS (Tap to fill):
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+      <button type="button" class="pill-btn" onclick="fillCredentials('admin', 'admin123')" style="font-size: 0.72rem; padding: 4px 10px;">
+        👑 Admin
+      </button>
+      <button type="button" class="pill-btn" onclick="fillCredentials('cashier', 'cashier123')" style="font-size: 0.72rem; padding: 4px 10px;">
+        🛎️ Cashier
+      </button>
+      <button type="button" class="pill-btn" onclick="fillCredentials('kitchen', 'kitchen123')" style="font-size: 0.72rem; padding: 4px 10px;">
+        🍳 Kitchen
+      </button>
+      <button type="button" class="pill-btn" onclick="fillCredentials('logistics', 'logistics123')" style="font-size: 0.72rem; padding: 4px 10px;">
+        🚚 Logistics
+      </button>
+      <button type="button" class="pill-btn" onclick="fillCredentials('utilities', 'utilities123')" style="font-size: 0.72rem; padding: 4px 10px;">
+        🧹 Utilities
+      </button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function fillCredentials(user, pass) {
+  document.getElementById("input-username").value = user;
+  document.getElementById("input-password").value = pass;
+}
+</script>
+{% endblock %}

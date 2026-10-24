@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Guest Lookup • {{ system_name }}{% endblock %}
+
+{% block portal_title %}👤 Front Desk Customer Directory{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 12px;">
+  <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--primary);">Guest Directory Lookup</h2>
+  <p style="font-size: 0.72rem; color: var(--text-muted);">Quick guest lookup & loyalty rewards verification</p>
+</div>
+
+<!-- Search Bar -->
+<form method="GET" action="{{ url_for('cashier_guests') }}" style="margin-bottom: 14px;">
+  <div style="display: flex; gap: 8px;">
+    <input type="text" name="q" class="form-control" placeholder="Search by name, email, or mobile..." value="{{ search_query }}">
+    <button type="submit" class="btn btn-sm btn-primary" style="width: auto;">🔍 Search</button>
+  </div>
+</form>
+
+<div style="display: flex; flex-direction: column; gap: 10px;">
+  {% for cust in customers %}
+    <div class="app-card" style="margin-bottom: 0;">
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <img src="/{{ cust.image_path or 'assets/imgs/customers/f/1.jpg' }}" alt="{{ cust.name }}" 
+             style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent);"
+             onerror="this.src='/assets/imgs/customers/f/1.jpg'">
+
+        <div style="flex: 1;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 0.95rem; font-weight: 800; color: var(--primary);">
+              {{ cust.name }}
+            </div>
+            <span class="badge badge-gold">
+              ⭐ {{ cust.loyalty_points }} pts
+            </span>
+          </div>
+
+          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+            ✉️ {{ cust.email or 'No email' }} • 📞 {{ cust.mobile_number or 'No phone' }}
+          </div>
+
+          <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">
+            Total Stays: <strong>{{ cust.stay_count }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); text-align: right;">
+        <button type="button" class="btn btn-sm btn-outline" style="width: 100%;"
+                onclick="startSoftphoneCall('{{ cust.name }}', '{{ cust.mobile_number }}', 'Customer', '/{{ cust.image_path or 'assets/imgs/customers/f/1.jpg' }}')">
+          📞 Call Guest Softphone
+        </button>
+      </div>
+    </div>
+  {% else %}
+    <p style="text-align: center; color: var(--text-muted); padding: 25px;">No customer records found.</p>
+  {% endfor %}
+</div>
+{% endblock %}

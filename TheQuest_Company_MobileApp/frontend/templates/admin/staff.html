@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Management • {{ system_name }}{% endblock %}
+
+{% block portal_title %}👥 Personnel & Security Clearance{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+  <div>
+    <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--primary);">Hotel Staff Directory</h2>
+    <p style="font-size: 0.72rem; color: var(--text-muted);">{{ employees|length }} Active & Inactive Personnel</p>
+  </div>
+  <button type="button" class="btn btn-sm btn-primary" onclick="openSheet('add-staff-sheet')">
+    ➕ Add Staff
+  </button>
+</div>
+
+<!-- Employees List -->
+<div style="display: flex; flex-direction: column; gap: 10px;">
+  {% for emp in employees %}
+    <div class="app-card" style="margin-bottom: 0; {% if not emp.is_active %}opacity: 0.65;{% endif %}">
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <img src="/{{ emp.image_path or 'assets/imgs/employees/m/1.jpg' }}" alt="{{ emp.name }}" 
+             style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent);"
+             onerror="this.src='/assets/imgs/employees/m/1.jpg'">
+
+        <div style="flex: 1;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 0.95rem; font-weight: 800; color: var(--primary);">
+              {{ emp.name }}
+            </div>
+            <span class="badge {% if emp.is_active %}badge-vacant{% else %}badge-occupied{% endif %}">
+              {{ 'Active' if emp.is_active else 'Deactivated' }}
+            </span>
+          </div>
+
+          <div style="display: flex; gap: 6px; align-items: center; margin: 2px 0;">
+            <span class="badge badge-primary" style="font-size: 0.65rem;">{{ emp.role }}</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">@{{ emp.username }}</span>
+          </div>
+
+          <div style="font-size: 0.72rem; color: var(--text-muted);">
+            📞 {{ emp.phone or 'No phone' }} • ✉️ {{ emp.email or 'No email' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Row -->
+      <div style="display: flex; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border);">
+        <button type="button" class="btn btn-sm btn-outline" style="flex: 1;"
+                onclick="startSoftphoneCall('{{ emp.name }}', '{{ emp.phone }}', '{{ emp.role }}', '/{{ emp.image_path or 'assets/imgs/employees/m/1.jpg' }}')">
+          📞 Dispatch Call
+        </button>
+
+        <form method="POST" action="{{ url_for('admin_staff') }}" style="flex: 1;">
+          <input type="hidden" name="action" value="toggle">
+          <input type="hidden" name="user_id" value="{{ emp.id }}">
+          <button type="submit" class="btn btn-sm {% if emp.is_active %}btn-outline{% else %}btn-success{% endif %}" style="width: 100%;">
+            {{ 'Deactivate' if emp.is_active else 'Activate' }}
+          </button>
+        </form>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- Add Employee Bottom Sheet -->
+<div id="add-staff-sheet" class="bottom-sheet-backdrop">
+  <div class="bottom-sheet-content">
+    <div class="sheet-handle"></div>
+    <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary); margin-bottom: 4px;">
+      Enroll New Employee
+    </h3>
+    <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">
+      Assign departmental clearance and create account credentials.
+    </p>
+
+    <form method="POST" action="{{ url_for('admin_staff') }}">
+      <input type="hidden" name="action" value="add">
+
+      <div class="form-group">
+        <label for="emp-name">Full Name *</label>
+        <input type="text" id="emp-name" name="name" class="form-control" placeholder="e.g. Marcus Vance" required>
+      </div>
+
+      <div class="form-group">
+        <label for="emp-username">Username *</label>
+        <input type="text" id="emp-username" name="username" class="form-control" placeholder="e.g. chef_marcus" required>
+      </div>
+
+      <div class="form-group">
+        <label for="emp-password">Initial Password *</label>
+        <input type="password" id="emp-password" name="password" class="form-control" placeholder="••••••••" required>
+      </div>
+
+      <div class="form-group">
+        <label for="emp-role">Operational Clearance *</label>
+        <select id="emp-role" name="role" class="form-control" required>
+          <option value="Admin">Admin</option>
+          <option value="Cashier">Cashier</option>
+          <option value="Staff_Kitchen">Staff_Kitchen</option>
+          <option value="Staff_Logistics">Staff_Logistics</option>
+          <option value="Staff_Utilities">Staff_Utilities</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="emp-phone">Phone Number</label>
+        <input type="tel" id="emp-phone" name="phone" class="form-control" placeholder="+63 918 000 0000">
+      </div>
+
+      <div class="form-group">
+        <label for="emp-email">Email Address</label>
+        <input type="email" id="emp-email" name="email" class="form-control" placeholder="staff@thequest.com">
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="margin-top: 8px;">
+        Register Staff Member
+      </button>
+
+      <button type="button" class="btn btn-outline" onclick="closeSheet('add-staff-sheet')" style="margin-top: 8px;">
+        Cancel
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

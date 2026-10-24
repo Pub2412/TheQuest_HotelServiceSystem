@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Bulletin • {{ system_name }}{% endblock %}
+
+{% block portal_title %}📢 Employee Bulletin Board{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+  <div>
+    <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--primary);">Company Announcements</h2>
+    <p style="font-size: 0.72rem; color: var(--text-muted);">Internal notices, memos & operational updates</p>
+  </div>
+  <button type="button" class="btn btn-sm btn-primary" onclick="openSheet('new-post-sheet')">
+    ➕ Post Notice
+  </button>
+</div>
+
+<!-- Bulletin Posts Feed -->
+<div style="display: flex; flex-direction: column; gap: 12px;">
+  {% for post in posts %}
+    <div class="app-card" style="margin-bottom: 0;">
+      <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+        <img src="/{{ post.author_image or 'assets/imgs/employees/m/1.jpg' }}" alt="{{ post.author_name }}"
+             style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--accent);"
+             onerror="this.src='/assets/imgs/employees/m/1.jpg'">
+
+        <div>
+          <div style="font-size: 0.88rem; font-weight: 800; color: var(--primary);">
+            {{ post.author_name or 'Staff Member' }}
+          </div>
+          <div style="font-size: 0.68rem; color: var(--text-muted);">
+            Clearance: {{ post.author_role or 'Staff' }} • {{ post.timestamp }}
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-dark); margin-bottom: 6px;">
+        {{ post.title }}
+      </div>
+
+      <div style="font-size: 0.82rem; color: var(--text-normal); line-height: 1.5; white-space: pre-wrap;">
+        {{ post.content }}
+      </div>
+    </div>
+  {% else %}
+    <p style="text-align: center; color: var(--text-muted); padding: 30px;">No bulletin announcements posted yet.</p>
+  {% endfor %}
+</div>
+
+<!-- New Post Bottom Sheet -->
+<div id="new-post-sheet" class="bottom-sheet-backdrop">
+  <div class="bottom-sheet-content">
+    <div class="sheet-handle"></div>
+    <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary); margin-bottom: 4px;">
+      Publish Bulletin Notice
+    </h3>
+    <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">
+      Broadcast an operational announcement to all hotel personnel.
+    </p>
+
+    <form method="POST" action="{{ url_for('bulletin_view') }}">
+      <div class="form-group">
+        <label for="post-title">Announcement Headline *</label>
+        <input type="text" id="post-title" name="title" class="form-control" placeholder="e.g. Executive Meeting at 2:00 PM" required>
+      </div>
+
+      <div class="form-group">
+        <label for="post-content">Message Content *</label>
+        <textarea id="post-content" name="content" class="form-control" rows="4" placeholder="Type announcement details here..." required></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="margin-top: 8px;">
+        Broadcast Announcement
+      </button>
+
+      <button type="button" class="btn btn-outline" onclick="closeSheet('new-post-sheet')" style="margin-top: 8px;">
+        Cancel
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

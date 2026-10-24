@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>{% block title %}{{ system_name }}{% endblock %} • Mobile Enterprise Portal</title>
+  
+  <!-- Mobile & PWA Meta -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#3B185F">
+  <link rel="manifest" href="{{ url_for('serve_manifest') }}">
+  <link rel="icon" type="image/png" href="/assets/imgs/logo/crest.png">
+
+  <!-- Mobile Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="device-frame-mode">
+
+  <!-- Desktop Controls Bar (Simulator view mode switcher on PCs) -->
+  <header class="desktop-controls-bar">
+    <div class="brand-badge">
+      <span>🏨 {{ system_name }} Enterprise</span>
+      <span style="color: var(--primary-tint); font-weight: normal; font-size: 0.75rem;">| Mobile Port</span>
+    </div>
+    <div class="view-toggle-btns">
+      <button type="button" id="btn-view-frame" class="sim-btn active" title="Render inside phone chassis">📱 Phone View</button>
+      <button type="button" id="btn-view-full" class="sim-btn" title="Expand full browser width">💻 Full Responsive</button>
+    </div>
+  </header>
+
+  <!-- Mobile App Shell Container -->
+  <main class="mobile-app-shell">
+
+    <!-- Phone Hardware Simulation Bar (clock, dynamic notch, wifi/battery) -->
+    <div class="phone-hardware-bar">
+      <span>{{ now_time }}</span>
+      <div class="phone-notch"></div>
+      <span>5G 📶 98% 🔋</span>
+    </div>
+
+    <!-- Mobile Top App Bar Header -->
+    <header class="mobile-app-header">
+      <div class="header-top-row">
+        <a href="/" class="brand-section">
+          <img src="/assets/imgs/logo/crest.png" alt="The Quest Logo" class="crest-icon" onerror="this.style.display='none'">
+          <div class="brand-title-group">
+            <h1>{{ system_name }}</h1>
+            <div class="slogan-pill">"{{ system_slogan }}"</div>
+          </div>
+        </a>
+
+        <div class="header-actions">
+          {% if current_user %}
+            <div class="user-profile-chip">
+              <img src="/{{ current_user.image_path or 'assets/imgs/employees/m/1.jpg' }}" alt="{{ current_user.name }}" class="avatar">
+              <div class="user-meta-text">
+                <div class="user-name">{{ current_user.name.split()[0] }}</div>
+                <div class="user-role">{{ current_user.role.replace('Staff_', '') }}</div>
+              </div>
+            </div>
+            <a href="{{ url_for('logout_view') }}" class="btn-header-icon" title="Sign Out" onclick="return confirm('Sign out of mobile system?');">
+              🚪
+            </a>
+          {% else %}
+            <a href="{{ url_for('login_view') }}" class="btn-header-icon" title="Sign In">🔑</a>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if current_user %}
+      <div class="header-context-bar">
+        <span class="portal-title-badge">
+          {% block portal_title %}⚡ Operations Console{% endblock %}
+        </span>
+        <span style="color: var(--accent-light);">{{ now_date }}</span>
+      </div>
+      {% endif %}
+    </header>
+
+    <!-- Scrollable Content Body -->
+    <div class="mobile-content">
+      <!-- Flash Alert Notifications -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-container">
+            {% for category, message in messages %}
+              <div class="flash-alert {{ category }}">
+                <span>{% if category == 'success' %}✅{% elif category == 'danger' %}⚠️{% else %}ℹ️{% endif %}</span>
+                <span>{{ message }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- Primary Page Body -->
+      {% block content %}{% endblock %}
+    </div>
+
+    <!-- Sticky Role-Based Bottom Navigation Bar -->
+    {% if current_user %}
+    <nav class="mobile-bottom-nav">
+      {% if current_user.role == 'Admin' %}
+        <a href="{{ url_for('admin_dashboard') }}" class="nav-item {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+          <span class="nav-icon">📊</span>
+          <span>Analytics</span>
+        </a>
+        <a href="{{ url_for('admin_map') }}" class="nav-item {% if request.endpoint == 'admin_map' %}active{% endif %}">
+          <span class="nav-icon">🏨</span>
+          <span>Map</span>
+        </a>
+        <a href="{{ url_for('admin_inventory') }}" class="nav-item {% if request.endpoint == 'admin_inventory' %}active{% endif %}">
+          <span class="nav-icon">📦</span>
+          <span>Inventory</span>
+        </a>
+        <a href="{{ url_for('admin_staff') }}" class="nav-item {% if request.endpoint == 'admin_staff' %}active{% endif %}">
+          <span class="nav-icon">👥</span>
+          <span>Staff</span>
+        </a>
+        <a href="javascript:void(0)" onclick="openSheet('admin-more-sheet')" class="nav-item">
+          <span class="nav-icon">☰</span>
+          <span>More</span>
+        </a>
+
+      {% elif current_user.role == 'Cashier' %}
+        <a href="{{ url_for('cashier_reservations') }}" class="nav-item {% if request.endpoint == 'cashier_reservations' %}active{% endif %}">
+          <span class="nav-icon">🛎️</span>
+          <span>Bookings</span>
+        </a>
+        <a href="{{ url_for('cashier_map') }}" class="nav-item {% if request.endpoint == 'cashier_map' %}active{% endif %}">
+          <span class="nav-icon">🏨</span>
+          <span>Floor Map</span>
+        </a>
+        <a href="{{ url_for('cashier_guests') }}" class="nav-item {% if request.endpoint == 'cashier_guests' %}active{% endif %}">
+          <span class="nav-icon">👤</span>
+          <span>Guests</span>
+        </a>
+        <a href="{{ url_for('bulletin_view') }}" class="nav-item {% if request.endpoint == 'bulletin_view' %}active{% endif %}">
+          <span class="nav-icon">📢</span>
+          <span>Bulletin</span>
+        </a>
+        <a href="{{ url_for('inbox_view') }}" class="nav-item {% if request.endpoint == 'inbox_view' %}active{% endif %}">
+          <span class="nav-icon">💬</span>
+          <span>Inbox</span>
+        </a>
+
+      {% elif current_user.role == 'Staff_Kitchen' %}
+        <a href="{{ url_for('staff_kitchen') }}" class="nav-item {% if request.endpoint == 'staff_kitchen' %}active{% endif %}">
+          <span class="nav-icon">🍳</span>
+          <span>Food Orders</span>
+        </a>
+        <a href="{{ url_for('bulletin_view') }}" class="nav-item {% if request.endpoint == 'bulletin_view' %}active{% endif %}">
+          <span class="nav-icon">📢</span>
+          <span>Bulletin</span>
+        </a>
+        <a href="{{ url_for('inbox_view') }}" class="nav-item {% if request.endpoint == 'inbox_view' %}active{% endif %}">
+          <span class="nav-icon">💬</span>
+          <span>Inbox</span>
+        </a>
+
+      {% elif current_user.role == 'Staff_Logistics' %}
+        <a href="{{ url_for('staff_logistics') }}" class="nav-item {% if request.endpoint == 'staff_logistics' %}active{% endif %}">
+          <span class="nav-icon">🚚</span>
+          <span>Shipments</span>
+        </a>
+        <a href="{{ url_for('bulletin_view') }}" class="nav-item {% if request.endpoint == 'bulletin_view' %}active{% endif %}">
+          <span class="nav-icon">📢</span>
+          <span>Bulletin</span>
+        </a>
+        <a href="{{ url_for('inbox_view') }}" class="nav-item {% if request.endpoint == 'inbox_view' %}active{% endif %}">
+          <span class="nav-icon">💬</span>
+          <span>Inbox</span>
+        </a>
+
+      {% elif current_user.role == 'Staff_Utilities' %}
+        <a href="{{ url_for('staff_utilities') }}" class="nav-item {% if request.endpoint == 'staff_utilities' %}active{% endif %}">
+          <span class="nav-icon">🧹</span>
+          <span>Housekeeping</span>
+        </a>
+        <a href="{{ url_for('bulletin_view') }}" class="nav-item {% if request.endpoint == 'bulletin_view' %}active{% endif %}">
+          <span class="nav-icon">📢</span>
+          <span>Bulletin</span>
+        </a>
+        <a href="{{ url_for('inbox_view') }}" class="nav-item {% if request.endpoint == 'inbox_view' %}active{% endif %}">
+          <span class="nav-icon">💬</span>
+          <span>Inbox</span>
+        </a>
+      {% endif %}
+    </nav>
+
+    <!-- Floating Action Button: Quick Softphone Dispatch -->
+    <button type="button" class="fab-phone-btn" onclick="startSoftphoneCall('Front Desk Lead', '+63 917 101 2002', 'Cashier', '/assets/imgs/employees/f/2.jpg')" title="Launch Softphone Voice Call">
+      📞
+    </button>
+    {% endif %}
+
+  </main>
+
+  <!-- ==========================================================================
+       ADMIN "MORE" BOTTOM SHEET
+  =========================================================================== -->
+  <div id="admin-more-sheet" class="bottom-sheet-backdrop">
+    <div class="bottom-sheet-content">
+      <div class="sheet-handle"></div>
+      <h3 style="color: var(--primary); font-size: 1.1rem; margin-bottom: 14px; font-weight: 800;">Admin Management Modules</h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <a href="{{ url_for('admin_guests') }}" class="btn btn-outline" style="justify-content: flex-start; text-align: left;">
+          🌟 Guest Directory & Loyalty Points
+        </a>
+        <a href="{{ url_for('admin_rewards') }}" class="btn btn-outline" style="justify-content: flex-start; text-align: left;">
+          🎁 Loyalty Rewards Catalog
+        </a>
+        <a href="{{ url_for('admin_logs') }}" class="btn btn-outline" style="justify-content: flex-start; text-align: left;">
+          🔒 Security Audit Logs & Telemetry
+        </a>
+        <a href="{{ url_for('admin_export_pdf') }}" class="btn btn-accent" style="justify-content: flex-start; text-align: left;">
+          📄 Download Executive PDF Report
+        </a>
+        <a href="{{ url_for('bulletin_view') }}" class="btn btn-outline" style="justify-content: flex-start; text-align: left;">
+          📢 Staff Bulletin Announcements
+        </a>
+        <a href="{{ url_for('inbox_view') }}" class="btn btn-outline" style="justify-content: flex-start; text-align: left;">
+          💬 Staff Messages & Call Dispatch
+        </a>
+        <button type="button" class="btn btn-sm btn-outline" onclick="closeSheet('admin-more-sheet')" style="margin-top: 8px;">
+          Close Menu
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       INTERACTIVE SOFTPHONE CALL DIALER MODAL
+  =========================================================================== -->
+  <div id="softphone-modal" class="softphone-modal-backdrop">
+    <div class="softphone-card">
+      <div class="softphone-brand-title">THE QUEST HOTEL • VOICE DISPATCH</div>
+      <div id="call-status-label" class="call-status-label">Dialing...</div>
+
+      <div class="call-avatar-wrapper">
+        <div class="call-pulse-ring"></div>
+        <img id="call-contact-avatar" src="/assets/imgs/employees/m/1.jpg" alt="Contact Avatar">
+      </div>
+
+      <div id="call-contact-name" class="contact-call-name">Staff Member</div>
+      <div id="call-contact-role" class="contact-call-role">Operations</div>
+      <div id="call-contact-number" class="contact-call-number">+63 900 000 0000</div>
+
+      <div id="call-timer-text" class="call-timer-display">00:00</div>
+
+      <div class="call-action-grid">
+        <button type="button" id="softphone-mute-btn" class="call-ctrl-btn" title="Toggle Mute">🎤</button>
+        <button type="button" id="softphone-speaker-btn" class="call-ctrl-btn" title="Speaker">🔊</button>
+      </div>
+
+      <button type="button" id="softphone-end-btn" class="btn-end-call">
+        <span>🔴</span> End Call
+      </button>
+    </div>
+  </div>
+
+  <!-- Interactive Mobile JavaScript -->
+  <script src="{{ url_for('static', filename='js/mobile.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

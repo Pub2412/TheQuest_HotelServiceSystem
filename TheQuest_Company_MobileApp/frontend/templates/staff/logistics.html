@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Logistics & Shipments • {{ system_name }}{% endblock %}
+
+{% block portal_title %}🚚 Freight & Logistics Dispatch{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+  <div>
+    <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--primary);">Shipments & Deliveries</h2>
+    <p style="font-size: 0.72rem; color: var(--text-muted);">Inbound hotel supplies & vendor logistics</p>
+  </div>
+  <button type="button" class="btn btn-sm btn-primary" onclick="openSheet('new-shipment-sheet')">
+    ➕ Inbound Freight
+  </button>
+</div>
+
+<!-- Category Status Filter Pills -->
+<div class="floor-filter-pills">
+  {% for st in ['All', 'Will be Shipped', 'On the Way', 'Near Receive', 'Completed', 'Canceled'] %}
+    <a href="{{ url_for('staff_logistics', status=st) }}" class="pill-btn {% if current_status == st %}active{% endif %}">
+      {{ st }}
+    </a>
+  {% endfor %}
+</div>
+
+<!-- Shipments List -->
+<div style="display: flex; flex-direction: column; gap: 10px;">
+  {% for deliv in deliveries %}
+    <div class="app-card" style="margin-bottom: 0;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <div style="font-size: 0.95rem; font-weight: 800; color: var(--primary);">
+            {{ deliv.description }}
+          </div>
+          <div style="font-size: 0.72rem; color: var(--accent-text); font-weight: 700; margin-top: 2px;">
+            Code: {{ deliv.logistics_code or 'N/A' }}
+          </div>
+        </div>
+
+        <span class="badge {% if deliv.status == 'Completed' %}badge-vacant{% elif deliv.status == 'Near Receive' %}badge-gold{% elif deliv.status == 'On the Way' %}badge-reserved{% else %}badge-service{% endif %}">
+          {{ deliv.status }}
+        </span>
+      </div>
+
+      <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 6px;">
+        Last Updated: {{ deliv.date_updated }}
+      </div>
+
+      <!-- Action Row -->
+      {% if deliv.status not in ['Completed', 'Canceled'] %}
+        <div style="display: flex; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); justify-content: flex-end;">
+          {% if deliv.status == 'Will be Shipped' %}
+            <form method="POST" action="{{ url_for('staff_logistics') }}">
+              <input type="hidden" name="action" value="update_status">
+              <input type="hidden" name="delivery_id" value="{{ deliv.id }}">
+              <input type="hidden" name="new_status" value="On the Way">
+              <button type="submit" class="btn btn-sm btn-primary">
+                Mark 'On the Way'
+              </button>
+            </form>
+          {% elif deliv.status == 'On the Way' %}
+            <form method="POST" action="{{ url_for('staff_logistics') }}">
+              <input type="hidden" name="action" value="update_status">
+              <input type="hidden" name="delivery_id" value="{{ deliv.id }}">
+              <input type="hidden" name="new_status" value="Near Receive">
+              <button type="submit" class="btn btn-sm btn-accent">
+                Mark 'Near Receive'
+              </button>
+            </form>
+          {% elif deliv.status == 'Near Receive' %}
+            <button type="button" class="btn btn-sm btn-success" onclick="openPasscodeModal('{{ deliv.id }}', 'Completed')">
+              Receive & Complete (Passcode)
+            </button>
+          {% endif %}
+
+          <button type="button" class="btn btn-sm btn-outline" style="color: var(--danger); border-color: var(--danger);" onclick="openPasscodeModal('{{ deliv.id }}', 'Canceled')">
+            Cancel
+          </button>
+        </div>
+      {% endif %}
+    </div>
+  {% else %}
+    <p style="text-align: center; color: var(--text-muted); padding: 25px;">No shipments match filter.</p>
+  {% endfor %}
+</div>
+
+<!-- Passcode Authorization Bottom Sheet (QUEST-LOG-2026) -->
+<div id="passcode-sheet" class="bottom-sheet-backdrop">
+  <div class="bottom-sheet-content">
+    <div class="sheet-handle"></div>
+    <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary); margin-bottom: 4px;">
+      Logistics Security Passcode Required
+    </h3>
+    <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 12px;">
+      Confirming receipt or canceling requires authorized logistics staff code.
+    </p>
+
+    <div style="background: var(--accent-light); padding: 8px 12px; border-radius: var(--radius-sm); font-size: 0.75rem; color: var(--accent-text); margin-bottom: 14px;">
+      💡 Default System Passcode: <strong>QUEST-LOG-2026</strong>
+    </div>
+
+    <form method="POST" action="{{ url_for('staff_logistics') }}">
+      <input type="hidden" name="action" value="update_status">
+      <input type="hidden" id="passcode-delivery-id" name="delivery_id">
+      <input type="hidden" id="passcode-new-status" name="new_status">
+
+      <div class="form-group">
+        <label for="passcode-input">Logistics Passcode *</label>
+        <input type="text" id="passcode-input" name="passcode" class="form-control" placeholder="QUEST-LOG-2026" required autofocus>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="margin-top: 8px;">
+        Authorize & Update Shipment
+      </button>
+
+      <button type="button" class="btn btn-outline" onclick="closeSheet('passcode-sheet')" style="margin-top: 8px;">
+        Cancel
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- New Shipment Bottom Sheet -->
+<div id="new-shipment-sheet" class="bottom-sheet-backdrop">
+  <div class="bottom-sheet-content">
+    <div class="sheet-handle"></div>
+    <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary); margin-bottom: 4px;">
+      Record Inbound Shipment
+    </h3>
+    <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">
+      Enter freight details and tracking code.
+    </p>
+
+    <form method="POST" action="{{ url_for('staff_logistics') }}">
+      <input type="hidden" name="action" value="new_delivery">
+
+      <div class="form-group">
+        <label for="del-desc">Shipment Description *</label>
+        <input type="text" id="del-desc" name="description" class="form-control" placeholder="e.g. 50 Linen & Towel Bundles" required>
+      </div>
+
+      <div class="form-group">
+        <label for="del-code">Logistics / Tracking Code *</label>
+        <input type="text" id="del-code" name="logistics_code" class="form-control" placeholder="e.g. TRK-2026-099" required>
+      </div>
+
+      <div class="form-group">
+        <label for="del-init-stat">Initial Status</label>
+        <select id="del-init-stat" name="status" class="form-control">
+          <option value="Will be Shipped">Will be Shipped</option>
+          <option value="On the Way">On the Way</option>
+          <option value="Near Receive">Near Receive</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="margin-top: 8px;">
+        Record Delivery Entry
+      </button>
+
+      <button type="button" class="btn btn-outline" onclick="closeSheet('new-shipment-sheet')" style="margin-top: 8px;">
+        Cancel
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openPasscodeModal(id, targetStatus) {
+  document.getElementById("passcode-delivery-id").value = id;
+  document.getElementById("passcode-new-status").value = targetStatus;
+  document.getElementById("passcode-input").value = "";
+  openSheet("passcode-sheet");
+}
+</script>
+{% endblock %}

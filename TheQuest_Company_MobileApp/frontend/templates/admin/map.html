@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Hotel Floor Map • {{ system_name }}{% endblock %}
+
+{% block portal_title %}🏨 Architectural Floor Visualizer{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+  <div>
+    <h2 style="font-size: 1.15rem; font-weight: 800; color: var(--primary);">Hotel Floor Status Map</h2>
+    <p style="font-size: 0.72rem; color: var(--text-muted);">Interactive room occupancy & inspection</p>
+  </div>
+  <button type="button" class="btn btn-sm btn-outline" onclick="openSheet('blueprint-modal')">
+    🗺️ Blueprint Map
+  </button>
+</div>
+
+<!-- Floor Filter Pills -->
+<div class="floor-filter-pills">
+  <a href="{{ url_for('admin_map', status=current_status) }}" class="pill-btn {% if not current_floor %}active{% endif %}">
+    All Floors
+  </a>
+  <a href="{{ url_for('admin_map', floor=1, status=current_status) }}" class="pill-btn {% if current_floor == 1 %}active{% endif %}">
+    Floor 1 (Suites 101-105)
+  </a>
+  <a href="{{ url_for('admin_map', floor=2, status=current_status) }}" class="pill-btn {% if current_floor == 2 %}active{% endif %}">
+    Floor 2 (Suites 201-205)
+  </a>
+  <a href="{{ url_for('admin_map', floor=3, status=current_status) }}" class="pill-btn {% if current_floor == 3 %}active{% endif %}">
+    Floor 3 (Suites 301-305)
+  </a>
+  <a href="{{ url_for('admin_map', floor=4, status=current_status) }}" class="pill-btn {% if current_floor == 4 %}active{% endif %}">
+    Floor 4 (Executive 401-405)
+  </a>
+</div>
+
+<!-- Status Filter Chips -->
+<div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px;">
+  {% for st in ['All', 'Vacant', 'Occupied', 'Needs Service', 'Reserved'] %}
+    <a href="{{ url_for('admin_map', floor=current_floor, status=st) }}" 
+       class="pill-btn {% if current_status == st %}active{% endif %}" style="font-size: 0.72rem; padding: 4px 10px;">
+      {{ st }}
+    </a>
+  {% endfor %}
+</div>
+
+<!-- Room Grid -->
+<div class="room-grid">
+  {% for room in rooms %}
+    <div class="room-box {{ room.status }}" onclick="inspectRoom('{{ room.room_number }}', '{{ room.type }}', '{{ room.status }}', '{{ room.price_per_night }}', '{{ room.current_guest or '' }}', '{{ room.guest_phone or '' }}')">
+      <div class="room-num-row">
+        <span class="room-num">{{ room.room_number }}</span>
+        <span class="badge {% if room.status == 'Vacant' %}badge-vacant{% elif room.status == 'Occupied' %}badge-occupied{% elif room.status == 'Needs Service' %}badge-service{% else %}badge-reserved{% endif %}">
+          {{ room.status }}
+        </span>
+      </div>
+
+      <div class="room-type">{{ room.type }}</div>
+      
+      {% if room.current_guest %}
+        <div class="room-guest">👤 {{ room.current_guest }}</div>
+      {% else %}
+        <div class="room-guest" style="color: var(--text-muted); font-weight: normal;">— No Occupant —</div>
+      {% endif %}
+
+      <div class="room-price">PHP {{ "{:,.0f}".format(room.price_per_night) }} / night</div>
+    </div>
+  {% else %}
+    <div style="grid-column: span 2; text-align: center; padding: 30px 10px; color: var(--text-muted);">
+      No suites match the selected floor or status filter.
+    </div>
+  {% endfor %}
+</div>
+
+<!-- Room Inspection Bottom Sheet -->
+<div id="room-sheet" class="bottom-sheet-backdrop">
+  <div class="bottom-sheet-content">
+    <div class="sheet-handle"></div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <h3 id="sheet-room-num" style="font-size: 1.3rem; font-weight: 800; color: var(--primary);">Suite 101</h3>
+      <span id="sheet-room-badge" class="badge">Vacant</span>
+    </div>
+
+    <div style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 14px; font-size: 0.85rem; line-height: 1.6;">
+      <div><strong>Category:</strong> <span id="sheet-room-type">Deluxe Ocean Suite</span></div>
+      <div><strong>Rate:</strong> PHP <span id="sheet-room-price">3,500</span> / night</div>
+      <div><strong>Current Guest:</strong> <span id="sheet-room-guest">—</span></div>
+      <div><strong>Guest Contact:</strong> <span id="sheet-room-phone">—</span></div>
+    </div>
+
+    <div id="sheet-call-wrapper" style="display: none; margin-bottom: 8px;">
+      <button type="button" id="sheet-call-btn" class="btn btn-primary">
+        📞 Call Occupant Softphone
+      </button>
+    </div>
+
+    <button type="button" class="btn btn-outline" onclick="closeSheet('room-sheet')">
+      Close Window
+    </button>
+  </div>
+</div>
+
+<!-- Architectural Blueprint Image Modal -->
+<div id="blueprint-modal" class="bottom-sheet-backdrop">
+  <div class="bottom-sheet-content" style="max-height: 92vh;">
+    <div class="sheet-handle"></div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--primary);">Hotel Architectural Blueprint</h3>
+      <button type="button" class="btn btn-sm btn-outline" onclick="closeSheet('blueprint-modal')">✕</button>
+    </div>
+    
+    <div style="border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); text-align: center;">
+      <img src="/assets/imgs/HotelMap.jpg" alt="Hotel Architectural Blueprint" style="width: 100%; height: auto; display: block;" onerror="this.alt='Floor plan image located at assets/imgs/HotelMap.jpg';">
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function inspectRoom(num, type, status, price, guest, phone) {
+  document.getElementById("sheet-room-num").textContent = "Suite " + num;
+  document.getElementById("sheet-room-type").textContent = type;
+  document.getElementById("sheet-room-price").textContent = Number(price).toLocaleString();
+  document.getElementById("sheet-room-guest").textContent = guest || "None (Suite Vacant)";
+  document.getElementById("sheet-room-phone").textContent = phone || "N/A";
+
+  const badge = document.getElementById("sheet-room-badge");
+  badge.textContent = status;
+  badge.className = "badge";
+  if (status === "Vacant") badge.classList.add("badge-vacant");
+  else if (status === "Occupied") badge.classList.add("badge-occupied");
+  else if (status === "Needs Service") badge.classList.add("badge-service");
+  else badge.classList.add("badge-reserved");
+
+  const callWrapper = document.getElementById("sheet-call-wrapper");
+  const callBtn = document.getElementById("sheet-call-btn");
+  if (guest && phone) {
+    callWrapper.style.display = "block";
+    callBtn.onclick = function() {
+      closeSheet('room-sheet');
+      startSoftphoneCall(guest, phone, 'Suite ' + num + ' Guest', '/assets/imgs/customers/f/1.jpg');
+    };
+  } else {
+    callWrapper.style.display = "none";
+  }
+
+  openSheet("room-sheet");
+}
+</script>
+{% endblock %}
