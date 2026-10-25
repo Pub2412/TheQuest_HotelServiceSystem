@@ -22,6 +22,7 @@
     let audioContext = null;
     let callStartedAt = null;
     let timerHandle = null;
+    let ringtoneHandle = null;
     let isMuted = false;
     const panel = document.getElementById("incoming-call");
     const from = document.getElementById("incoming-from");
@@ -55,6 +56,15 @@
         console.warn("Simulated call audio unavailable.", error);
       }
     };
+    const startRingtone = () => {
+      if (ringtoneHandle) return;
+      playCallTone();
+      ringtoneHandle = setInterval(playCallTone, 1200);
+    };
+    const stopRingtone = () => {
+      if (ringtoneHandle) clearInterval(ringtoneHandle);
+      ringtoneHandle = null;
+    };
     const updateCall = async (id, status) => {
       const body = new URLSearchParams({status});
       const response = await fetch(`/calls/${id}`, {
@@ -81,6 +91,7 @@
     };
     const hideCallScreen = () => {
       callScreen.hidden = true;
+      stopRingtone();
       callStartedAt = null;
       if (timerHandle) clearInterval(timerHandle);
       timerHandle = null;
@@ -102,6 +113,7 @@
         if (data.call.status === "ringing" && data.call.direction === "incoming") {
           from.textContent = `${data.call.name} · ${data.call.role.replaceAll("_", " ")}`;
           panel.hidden = false;
+          startRingtone();
           if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
         }
         if (data.call.status === "answered") {
@@ -116,6 +128,7 @@
       try {
         await tryMicrophone();
         await updateCall(activeCall.id, "answered");
+        stopRingtone();
         playCallTone();
         panel.hidden = true;
         showCallScreen({...activeCall, status: "answered"});
@@ -126,6 +139,7 @@
     document.getElementById("reject-call").addEventListener("click", async () => {
       try {
         await updateCall(activeCall.id, "ended");
+        stopRingtone();
         panel.hidden = true;
       } catch (error) {
         alert(error.message);

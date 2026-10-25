@@ -199,6 +199,8 @@ class PhoneCallModal(tk.Toplevel):
         self.call_duration_seconds = 0
         self.is_muted = False
         self.timer_job = None
+        self.ringtone_job = None
+        self.is_ringing = False
         self.audio_stream = None
         self.call_id = call_id
         self.is_outgoing = receiver_id is not None
@@ -342,11 +344,36 @@ class PhoneCallModal(tk.Toplevel):
         """Simulates line ringing then connecting after 1.5 seconds."""
         self.status_label.config(text="Dialing...")
         self.after(800, lambda: self.status_label.config(text="Ringing... 📳"))
+        self.after(800, self._start_ringtone)
         self.after(2200, self._connect_call)
+
+    def _start_ringtone(self):
+        if not self.winfo_exists() or self.is_connected:
+            return
+        self.is_ringing = True
+        self._ring_once()
+
+    def _ring_once(self):
+        if not self.is_ringing or not self.winfo_exists():
+            return
+        try:
+            import winsound
+            winsound.Beep(880, 180)
+            winsound.Beep(660, 180)
+        except (ImportError, RuntimeError):
+            self.bell()
+        self.ringtone_job = self.after(900, self._ring_once)
+
+    def _stop_ringtone(self):
+        self.is_ringing = False
+        if self.ringtone_job:
+            self.after_cancel(self.ringtone_job)
+            self.ringtone_job = None
 
     def _connect_call(self):
         if not self.winfo_exists():
             return
+        self._stop_ringtone()
         self.is_connected = True
         self.call_start_time = time.time()
         self.status_label.config(text="Connected (Microphone active) 🟢", fg=COLOR_SUCCESS)
@@ -404,6 +431,7 @@ class PhoneCallModal(tk.Toplevel):
             self.mute_btn.config(text="🎤 Mute", bg="#4A2374", fg=COLOR_WHITE)
 
     def _end_call(self):
+        self._stop_ringtone()
         if self.timer_job:
             self.after_cancel(self.timer_job)
         self.is_connected = False
