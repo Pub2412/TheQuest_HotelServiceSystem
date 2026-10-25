@@ -215,12 +215,19 @@ function initAuthHandlers() {
       const email = document.getElementById("reg-email").value.trim();
       const mobile = document.getElementById("reg-mobile").value.trim();
       const password = document.getElementById("reg-password").value;
+      const profileImage = document.getElementById("reg-profile-image").files[0];
 
       try {
+        const formData = new FormData();
+        formData.append("name", name);
+        formData.append("email", email);
+        formData.append("mobile_number", mobile);
+        formData.append("password", password);
+        if (profileImage) formData.append("profile_image", profileImage);
+
         const res = await fetch("/api/register", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, mobile_number: mobile, password })
+          body: formData
         });
         const data = await res.json();
 

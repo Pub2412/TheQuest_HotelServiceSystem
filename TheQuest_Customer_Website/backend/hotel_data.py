@@ -273,11 +273,17 @@ def get_all_rooms(category_filter: Optional[str] = None) -> List[Dict]:
             "amenities": ["High-Speed Wi-Fi", "Room Service", "Smart TV", "Luxury Bath"]
         })
         room_dict.update(meta)
-        # Determine real-time booking availability
-        # Available if not occupied and not reserved
-        is_available = (room_dict["is_occupied"] == 0 and room_dict["is_reserved"] == 0 and room_dict["status"] == "Vacant")
+        # A reserved room may still be booked for a later, non-overlapping stay.
+        # Availability for the selected dates is checked when the booking is submitted.
+        is_available = (
+            room_dict["is_occupied"] == 0
+            and room_dict["status"] in ("Vacant", "Reserved")
+        )
         room_dict["is_available"] = is_available
-        room_dict["status_badge"] = "Available" if is_available else ("Occupied" if room_dict["is_occupied"] == 1 else "Reserved")
+        room_dict["status_badge"] = (
+            "Available" if is_available and room_dict["is_reserved"] == 0
+            else ("Reserved" if room_dict["is_reserved"] == 1 else "Occupied")
+        )
 
         if category_filter:
             if meta.get("category", "").lower() == category_filter.lower():
@@ -330,17 +336,23 @@ def create_reservation(customer_id: int, room_id: int, check_in_date: str, check
         return False, None, "Selected room was not found."
 
     room = dict(room)
-    # Check if currently reserved or occupied
-    if room["is_occupied"] == 1 or room["is_reserved"] == 1:
-        # Check if there is an active reservation overlapping
-        c.execute("""
-            SELECT id FROM reservations 
-            WHERE room_id = ? AND status IN ('Pending', 'Checked In')
-            AND NOT (check_out_date <= ? OR check_in_date >= ?)
-        """, (room_id, check_in_date, check_out_date))
-        if c.fetchone():
-            conn.close()
-            return False, None, f"Room {room['room_number']} is currently unavailable for the chosen dates."
+    # Check every active reservation, regardless of the room's current flag.
+    # Checkout is at 12:00 PM and check-in is at 2:00 PM, so reservations
+    # ending on a check-in date have the required two-hour turnover window.
+    c.execute("""
+        SELECT id FROM reservations
+        WHERE room_id = ? AND status IN ('Pending', 'Checked In')
+        AND NOT (check_out_date <= ? OR check_in_date >= ?)
+    """, (room_id, check_in_date, check_out_date))
+    if c.fetchone():
+        conn.close()
+        return False, None, f"Room {room['room_number']} is unavailable for the chosen dates. Please choose dates with at least a two-hour turnover window."
+
+    # A room currently occupied cannot be booked for an immediate stay. A
+    # future booking is valid when its dates do not overlap the active stay.
+    if room["is_occupied"] == 1 and d_in <= datetime.now().date():
+        conn.close()
+        return False, None, f"Room {room['room_number']} is currently occupied."
 
     total_amount = room["price_per_night"] * nights
     loyalty_pts_earned = int(total_amount // 100)  # 1 point per 100 PHP spent
@@ -415,6 +427,19 @@ def extend_reservation(customer_id: int, additional_days: int, payment_method: s
 
     new_co = current_co + timedelta(days=additional_days)
     new_co_str = new_co.strftime("%Y-%m-%d")
+
+    # A future reservation can begin on the current checkout date: 12:00 PM
+    # checkout followed by the standard 2:00 PM check-in leaves two hours.
+    c.execute("""
+        SELECT id, check_in_date
+        FROM reservations
+        WHERE room_id = ? AND id <> ? AND status IN ('Pending', 'Checked In')
+          AND check_in_date < ?
+    """, (stay["room_id"], stay["id"], new_co_str))
+    if c.fetchone():
+        conn.close()
+        return False, "Your extension would overlap a reserved stay. Please choose a shorter extension; at least two hours are required between stays."
+
     cost = stay["price_per_night"] * additional_days
     earned_pts = int(cost // 100)
 

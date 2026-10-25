@@ -23,7 +23,8 @@ from backend.db import (
 )
 from backend.auth import (
     authenticate_customer, register_customer, reset_password,
-    social_login, hash_password, check_lockout
+    social_login, hash_password, check_lockout, validate_profile_image,
+    store_profile_image
 )
 from backend.hotel_data import (
     PROMOTIONS_DATA, ROOM_METADATA, get_all_rooms, get_room_by_id,
@@ -42,6 +43,7 @@ app = Flask(
     static_folder=str(APP_DIR / "frontend" / "static")
 )
 app.secret_key = "thequest_luxury_secret_key_2026_guests_first"
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
 
 # Initialize auxiliary customer tables on startup
 init_customer_tables()
@@ -230,16 +232,17 @@ def api_social_login():
 @app.route("/api/register", methods=["POST"])
 def api_register():
     """Register a new customer account with 100 welcome bonus points."""
-    data = request.get_json() or {}
+    data = request.form if request.content_type and request.content_type.startswith("multipart/form-data") else (request.get_json() or {})
     name = data.get("name", "").strip()
     email = data.get("email", "").strip()
     mobile_number = data.get("mobile_number", "").strip()
     password = data.get("password", "").strip()
+    profile_image = request.files.get("profile_image")
 
     if not name or not password:
         return jsonify({"success": False, "message": "Please provide your full name and password."}), 400
 
-    success, customer, msg = register_customer(name, email, mobile_number, password)
+    success, customer, msg = register_customer(name, email, mobile_number, password, profile_image)
     if success and customer:
         session["customer_id"] = customer["id"]
         session["customer_name"] = customer["name"]
@@ -313,14 +316,18 @@ def api_profile_update():
     if not customer_id:
         return jsonify({"success": False, "message": "Please sign in to update profile."}), 401
 
-    data = request.get_json() or {}
+    data = request.form if request.content_type and request.content_type.startswith("multipart/form-data") else (request.get_json() or {})
     name = data.get("name", "").strip()
     email = data.get("email", "").strip()
     mobile = data.get("mobile_number", "").strip()
     new_password = data.get("new_password", "").strip()
+    profile_image = request.files.get("profile_image")
 
     if not name:
         return jsonify({"success": False, "message": "Name cannot be empty."}), 400
+    image_error = validate_profile_image(profile_image)
+    if image_error:
+        return jsonify({"success": False, "message": image_error}), 400
 
     conn = get_connection()
     c = conn.cursor()
@@ -352,6 +359,13 @@ def api_profile_update():
             """, (name, email, mobile, customer_id))
 
         conn.commit()
+        image_path, image_error = store_profile_image(profile_image, customer_id)
+        if image_error:
+            conn.close()
+            return jsonify({"success": False, "message": image_error}), 400
+        if image_path:
+            c.execute("UPDATE customers SET image_path = ? WHERE id = ?", (image_path, customer_id))
+            conn.commit()
         conn.close()
         session["customer_name"] = name
         return jsonify({"success": True, "message": "Profile updated successfully!"})

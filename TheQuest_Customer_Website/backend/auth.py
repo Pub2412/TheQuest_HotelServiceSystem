@@ -13,13 +13,18 @@ import time
 import secrets
 import hashlib
 import hmac
+import uuid
+from pathlib import Path
 from typing import Optional, Tuple
+from werkzeug.utils import secure_filename
 from .db import get_connection, get_customer_by_id, get_customer_by_identifier
 
 # In-memory lockout tracker: { identifier_or_ip: {"attempts": int, "lockout_until": float} }
 LOGIN_ATTEMPTS = {}
 LOCKOUT_DURATION_SECONDS = 60
 MAX_ATTEMPTS = 3
+PROFILE_IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
+PROFILE_IMAGE_MAX_BYTES = 5 * 1024 * 1024
 
 def hash_password(password: str) -> str:
     """Hash password using PBKDF2-HMAC-SHA256 with a 16-byte random salt."""
@@ -119,10 +124,50 @@ def authenticate_customer(identifier: str, password: str, client_ip: str = "") -
     record_successful_attempt(lock_key)
     return True, customer, "Login successful."
 
-def register_customer(name: str, email: str, mobile_number: str, password: str) -> Tuple[bool, Optional[dict], str]:
+def validate_profile_image(uploaded_file) -> Optional[str]:
+    """Validate an uploaded profile image before it is stored."""
+    if not uploaded_file or not uploaded_file.filename:
+        return None
+
+    filename = secure_filename(uploaded_file.filename)
+    extension = Path(filename).suffix.lower().lstrip(".")
+    if extension not in PROFILE_IMAGE_EXTENSIONS:
+        return "Profile picture must be JPG, JPEG, PNG, or WEBP."
+    if uploaded_file.mimetype not in {"image/jpeg", "image/png", "image/webp"}:
+        return "The selected profile picture is not a supported image type."
+
+    uploaded_file.stream.seek(0, 2)
+    size = uploaded_file.stream.tell()
+    uploaded_file.stream.seek(0)
+    if size > PROFILE_IMAGE_MAX_BYTES:
+        return "Profile picture must be 5 MB or smaller."
+    return None
+
+
+def store_profile_image(uploaded_file, customer_id: int) -> Tuple[Optional[str], Optional[str]]:
+    """Store a validated profile image and return its database path or an error."""
+    error = validate_profile_image(uploaded_file)
+    if error:
+        return None, error
+    if not uploaded_file or not uploaded_file.filename:
+        return None, None
+
+    extension = Path(secure_filename(uploaded_file.filename)).suffix.lower()
+    upload_dir = Path(__file__).resolve().parents[2] / "assets" / "imgs" / "customers" / "uploads"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"customer_{customer_id}_{uuid.uuid4().hex}{extension}"
+    uploaded_file.save(str(upload_dir / filename))
+    return f"assets/imgs/customers/uploads/{filename}", None
+
+
+def register_customer(name: str, email: str, mobile_number: str, password: str,
+                      profile_image=None) -> Tuple[bool, Optional[dict], str]:
     """Register a new customer with 100 initial welcome loyalty points."""
     if not name or not password or (not email and not mobile_number):
         return False, None, "Please provide your name, password, and at least an email or mobile number."
+    image_error = validate_profile_image(profile_image)
+    if image_error:
+        return False, None, image_error
 
     conn = get_connection()
     c = conn.cursor()
@@ -151,6 +196,13 @@ def register_customer(name: str, email: str, mobile_number: str, password: str) 
             VALUES (?, ?, ?, ?, 100, ?)
         """, (name, email, mobile_number, pwd_hash, avatar))
         new_id = c.lastrowid
+        image_path, image_error = store_profile_image(profile_image, new_id)
+        if image_error:
+            conn.rollback()
+            conn.close()
+            return False, None, image_error
+        if image_path:
+            c.execute("UPDATE customers SET image_path = ? WHERE id = ?", (image_path, new_id))
         conn.commit()
 
         c.execute("SELECT * FROM customers WHERE id = ?", (new_id,))

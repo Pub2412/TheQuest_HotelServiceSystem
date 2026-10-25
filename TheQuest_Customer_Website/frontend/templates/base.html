@@ -183,6 +183,11 @@
             <input type="text" id="reg-mobile" class="form-control" placeholder="+63 919 000 0000">
           </div>
           <div class="form-group">
+            <label class="form-label">Profile Picture (optional)</label>
+            <input type="file" id="reg-profile-image" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+            <div style="font-size: 0.72rem; color: var(--color-text-subtle); margin-top: 0.3rem;">JPG, PNG, or WEBP up to 5 MB.</div>
+          </div>
+          <div class="form-group">
             <label class="form-label">Password</label>
             <input type="password" id="reg-password" class="form-control" placeholder="Minimum 6 characters" required>
           </div>
@@ -226,6 +231,7 @@
         <span class="section-tag">Direct Suite Reservation</span>
         <h3 id="modal-room-name" style="font-family: var(--font-serif); font-size: 1.6rem; color: #fff; margin: 0.2rem 0;">Suite Booking</h3>
         <div id="modal-room-price" style="font-size: 1.25rem; font-weight: 800; color: var(--color-gold);">₱0.00 / night</div>
+        <div style="font-size: 0.78rem; color: var(--color-champagne); margin-top: 0.45rem;">Checkout is at 12:00 PM; check-in is at 2:00 PM. Dates must leave at least two hours between stays.</div>
       </div>
 
       <form id="booking-form">
@@ -315,6 +321,7 @@
             <option value="5">+5 Nights (₱{{ "{:,.2f}".format(active_stay.price_per_night * 5) }})</option>
             <option value="7">+1 Week (₱{{ "{:,.2f}".format(active_stay.price_per_night * 7) }})</option>
           </select>
+          <div style="font-size: 0.78rem; color: var(--color-champagne); margin-top: 0.45rem;">Extensions are approved only when they leave the next reservation at least two hours after checkout.</div>
         </div>
 
         <div class="form-group">
