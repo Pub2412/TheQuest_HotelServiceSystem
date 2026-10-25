@@ -20,3 +20,9 @@ Checking for Fixations
 22/10/2026
 Fixed Visibility for StaffPage.py to be per role
 Fixed logos to bee more contrasted and saturated
+
+24/10/2026
+Created mobile port of Quest Company Application
+
+25/10/2026
+Fixed mobile port of Quest Company Application now uses gradle and kotlin on a flask server.
