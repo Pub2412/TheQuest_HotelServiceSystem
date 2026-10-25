@@ -25,11 +25,30 @@
       </form>
     </section>
     {% endif %}
+    {% if call_targets %}
+    <section class="card call-card">
+      <h2>Employee voice call</h2>
+      <p class="muted">Call another employee and allow microphone access to simulate live audio.</p>
+      <form method="post" action="{{ url_for('calls') }}" id="call-form">
+        <label>Employee
+          <select name="receiver_id" required>
+            <option value="">Choose employee</option>
+            {% for employee in call_targets %}
+            <option value="{{ employee.id }}">{{ employee.name }} · {{ employee.role|replace("_", " ") }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <button type="submit">📞 Start voice call</button>
+      </form>
+    </section>
+    {% endif %}
     <section class="card"><h1>{{ title }}</h1><p class="muted">{{ description }}</p>
       <div class="table-wrap"><table><thead><tr>{% for column in columns %}<th>{{ column }}</th>{% endfor %}</tr></thead>
       <tbody>{% for row in rows %}<tr>{% for value in row %}<td>{{ value if value is not none else "N/A" }}</td>{% endfor %}</tr>{% else %}<tr><td colspan="{{ columns|length }}">No records found.</td></tr>{% endfor %}</tbody></table></div>
     </section>
     </div>
   </main>
+  {% include "_table_search.html" %}
+  {% include "_incoming_call.html" %}
 </body>
 </html>

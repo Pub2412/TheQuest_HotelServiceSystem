@@ -1,0 +1,19 @@
+<script>
+  (() => {
+    document.querySelectorAll(".table-wrap table").forEach((table, index) => {
+      const wrapper = table.parentElement;
+      const search = document.createElement("input");
+      search.type = "search";
+      search.className = "table-search";
+      search.placeholder = "Search this list...";
+      search.setAttribute("aria-label", "Search list");
+      search.addEventListener("input", () => {
+        const query = search.value.trim().toLocaleLowerCase();
+        table.querySelectorAll("tbody tr").forEach(row => {
+          row.hidden = query && !row.textContent.toLocaleLowerCase().includes(query);
+        });
+      });
+      wrapper.parentElement.insertBefore(search, wrapper);
+    });
+  })();
+</script>

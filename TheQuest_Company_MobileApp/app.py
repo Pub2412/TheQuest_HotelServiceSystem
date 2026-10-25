@@ -22,6 +22,22 @@ def get_connection():
     return connection
 
 
+def ensure_call_schema():
+    with get_connection() as connection:
+        connection.execute(
+            "CREATE TABLE IF NOT EXISTS calls ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT, caller_id INTEGER NOT NULL, "
+            "receiver_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'ringing', "
+            "created_at DATETIME DEFAULT CURRENT_TIMESTAMP, answered_at DATETIME, "
+            "ended_at DATETIME, FOREIGN KEY(caller_id) REFERENCES users(id), "
+            "FOREIGN KEY(receiver_id) REFERENCES users(id))"
+        )
+        connection.commit()
+
+
+ensure_call_schema()
+
+
 def verify_password(password, stored_hash):
     if not stored_hash:
         return False
@@ -152,7 +168,7 @@ def dashboard():
     return render_template("dashboard.html", metrics=metrics, rooms=rooms)
 
 
-def render_data_page(title, description, columns, rows, actions=None, form=None):
+def render_data_page(title, description, columns, rows, actions=None, form=None, call_targets=None):
     return render_template(
         "page.html",
         title=title,
@@ -161,6 +177,7 @@ def render_data_page(title, description, columns, rows, actions=None, form=None)
         rows=rows,
         actions=actions or [],
         form=form,
+        call_targets=call_targets or [],
     )
 
 
@@ -451,6 +468,11 @@ def inbox():
                 connection.commit()
         return redirect(url_for("inbox"))
     with get_connection() as connection:
+        staff = connection.execute(
+            "SELECT id, name, role, phone FROM users "
+            "WHERE id <> ? AND is_active = 1 ORDER BY name",
+            (user_id,),
+        ).fetchall()
         recipient_roles = [
             row["role"] for row in connection.execute(
                 "SELECT DISTINCT role FROM users WHERE is_active = 1 "
@@ -472,7 +494,60 @@ def inbox():
             ("receiver_role", "Recipient role", "select", recipient_roles),
             ("content", "Message", "textarea"),
         ]},
+        call_targets=staff,
     )
+
+
+@app.route("/calls", methods=["GET", "POST"])
+@login_required
+def calls():
+    user_id = session["user"]["id"]
+    if request.method == "POST":
+        receiver_id = request.form.get("receiver_id", type=int)
+        if not receiver_id or receiver_id == user_id:
+            return redirect(url_for("inbox"))
+        with get_connection() as connection:
+            receiver = connection.execute(
+                "SELECT id FROM users WHERE id = ? AND is_active = 1", (receiver_id,)
+            ).fetchone()
+            if receiver:
+                connection.execute(
+                    "INSERT INTO calls (caller_id, receiver_id) VALUES (?, ?)",
+                    (user_id, receiver_id),
+                )
+                connection.commit()
+        return redirect(url_for("inbox"))
+
+    with get_connection() as connection:
+        incoming = connection.execute(
+            "SELECT c.id, c.status, "
+            "CASE WHEN c.receiver_id = ? THEN 'incoming' ELSE 'outgoing' END AS direction, "
+            "u.name, u.role FROM calls c "
+            "JOIN users u ON u.id = CASE WHEN c.receiver_id = ? THEN c.caller_id ELSE c.receiver_id END "
+            "WHERE (c.receiver_id = ? OR c.caller_id = ?) "
+            "AND c.status IN ('ringing', 'answered') "
+            "ORDER BY c.created_at DESC LIMIT 1",
+            (user_id, user_id, user_id, user_id),
+        ).fetchone()
+    return {"call": dict(incoming) if incoming else None}
+
+
+@app.post("/calls/<int:call_id>")
+@login_required
+def update_call(call_id):
+    status = request.form.get("status", "")
+    if status not in {"answered", "ended"}:
+        return {"error": "Invalid call status"}, 400
+    user_id = session["user"]["id"]
+    timestamp_column = "answered_at" if status == "answered" else "ended_at"
+    with get_connection() as connection:
+        connection.execute(
+            f"UPDATE calls SET status = ?, {timestamp_column} = CURRENT_TIMESTAMP "
+            "WHERE id = ? AND (caller_id = ? OR receiver_id = ?)",
+            (status, call_id, user_id, user_id),
+        )
+        connection.commit()
+    return {"ok": True}
 
 
 @app.get("/map")

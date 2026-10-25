@@ -1,0 +1,159 @@
+<div id="incoming-call" class="incoming-call" hidden>
+  <strong>Incoming employee call</strong>
+  <span id="incoming-from"></span>
+  <div><button id="answer-call" type="button">Answer</button><button id="reject-call" type="button">Decline</button></div>
+</div>
+<div id="active-call" class="active-call" hidden>
+  <div class="active-call-brand">THE QUEST COMMUNICATIONS</div>
+  <div class="active-call-avatar">☎</div>
+  <h2 id="active-call-name">Employee call</h2>
+  <p id="active-call-role"></p>
+  <strong id="active-call-status">Connected</strong>
+  <div id="active-call-timer">00:00</div>
+  <div class="active-call-controls">
+    <button id="mute-call" type="button">🎤 Mute</button>
+    <button id="end-call" type="button">End Call</button>
+  </div>
+</div>
+<script>
+  (() => {
+    let activeCall = null;
+    let microphone = null;
+    let audioContext = null;
+    let callStartedAt = null;
+    let timerHandle = null;
+    let isMuted = false;
+    const panel = document.getElementById("incoming-call");
+    const from = document.getElementById("incoming-from");
+    const callScreen = document.getElementById("active-call");
+    const callName = document.getElementById("active-call-name");
+    const callRole = document.getElementById("active-call-role");
+    const callStatus = document.getElementById("active-call-status");
+    const callTimer = document.getElementById("active-call-timer");
+    const tryMicrophone = async () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return false;
+      try {
+        microphone = await navigator.mediaDevices.getUserMedia({audio: true});
+        return true;
+      } catch (error) {
+        console.warn("Microphone unavailable; continuing in simulated audio mode.", error);
+        return false;
+      }
+    };
+    const playCallTone = () => {
+      try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.frequency.value = 440;
+        gain.gain.value = 0.04;
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.25);
+      } catch (error) {
+        console.warn("Simulated call audio unavailable.", error);
+      }
+    };
+    const updateCall = async (id, status) => {
+      const body = new URLSearchParams({status});
+      const response = await fetch(`/calls/${id}`, {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body
+      });
+      if (!response.ok) throw new Error("The call is no longer available.");
+    };
+    const showCallScreen = (call) => {
+      callName.textContent = call.name;
+      callRole.textContent = call.role.replaceAll("_", " ");
+      callStatus.textContent = call.status === "answered" ? "Connected" : "Calling...";
+      callScreen.hidden = false;
+      if (!callStartedAt) callStartedAt = Date.now();
+      if (!timerHandle) {
+        timerHandle = setInterval(() => {
+          const elapsed = Math.floor((Date.now() - callStartedAt) / 1000);
+          const minutes = String(Math.floor(elapsed / 60)).padStart(2, "0");
+          const seconds = String(elapsed % 60).padStart(2, "0");
+          callTimer.textContent = `${minutes}:${seconds}`;
+        }, 1000);
+      }
+    };
+    const hideCallScreen = () => {
+      callScreen.hidden = true;
+      callStartedAt = null;
+      if (timerHandle) clearInterval(timerHandle);
+      timerHandle = null;
+      if (microphone) {
+        microphone.getTracks().forEach(track => track.stop());
+        microphone = null;
+      }
+    };
+    const poll = async () => {
+      try {
+        const response = await fetch("{{ url_for('calls') }}", {cache: "no-store"});
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!data.call) {
+          hideCallScreen();
+          return;
+        }
+        activeCall = data.call;
+        if (data.call.status === "ringing" && data.call.direction === "incoming") {
+          from.textContent = `${data.call.name} · ${data.call.role.replaceAll("_", " ")}`;
+          panel.hidden = false;
+          if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
+        }
+        if (data.call.status === "answered") {
+          panel.hidden = true;
+          showCallScreen(data.call);
+        }
+      } catch (error) {
+        console.error("Incoming call polling failed", error);
+      }
+    };
+    document.getElementById("answer-call").addEventListener("click", async () => {
+      try {
+        await tryMicrophone();
+        await updateCall(activeCall.id, "answered");
+        playCallTone();
+        panel.hidden = true;
+        showCallScreen({...activeCall, status: "answered"});
+      } catch (error) {
+        alert(`The call could not be answered: ${error.message}`);
+      }
+    });
+    document.getElementById("reject-call").addEventListener("click", async () => {
+      try {
+        await updateCall(activeCall.id, "ended");
+        panel.hidden = true;
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+    document.getElementById("mute-call").addEventListener("click", () => {
+      isMuted = !isMuted;
+      document.getElementById("mute-call").textContent = isMuted ? "🔇 Muted" : "🎤 Mute";
+      if (microphone) microphone.getTracks().forEach(track => track.enabled = !isMuted);
+    });
+    document.getElementById("end-call").addEventListener("click", async () => {
+      if (!activeCall) return;
+      try {
+        await updateCall(activeCall.id, "ended");
+        hideCallScreen();
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+    document.getElementById("call-form")?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await tryMicrophone();
+      event.target.submit();
+    });
+    poll();
+    setInterval(poll, 1500);
+    window.addEventListener("beforeunload", () => {
+      if (microphone) microphone.getTracks().forEach(track => track.stop());
+    });
+  })();
+</script>

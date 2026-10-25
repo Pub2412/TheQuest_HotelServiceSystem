@@ -176,7 +176,11 @@ class PhoneCallModal(tk.Toplevel):
     Features: Ringing state, simulated pickup, live duration timer, mute/speaker toggles,
     and end call summary.
     """
-    def __init__(self, parent, contact_name: str, phone_number: str, role_title: str = "Staff Member", image_path: str = None):
+    def __init__(
+        self, parent, contact_name: str, phone_number: str,
+        role_title: str = "Staff Member", image_path: str = None,
+        receiver_id: int = None, call_id: int = None,
+    ):
         super().__init__(parent)
         self.contact_name = contact_name
         self.phone_number = phone_number or "+63 900 000 0000"
@@ -195,6 +199,25 @@ class PhoneCallModal(tk.Toplevel):
         self.call_duration_seconds = 0
         self.is_muted = False
         self.timer_job = None
+        self.audio_stream = None
+        self.call_id = call_id
+        self.is_outgoing = receiver_id is not None
+        self._parent_user_id = getattr(parent, "current_user", {}).get("id")
+
+        if receiver_id and self._parent_user_id and not call_id:
+            try:
+                from database.db import get_connection
+                with get_connection() as connection:
+                    result = connection.execute(
+                        "INSERT INTO calls (caller_id, receiver_id) VALUES (?, ?)",
+                        (self._parent_user_id, receiver_id),
+                    )
+                    self.call_id = result.lastrowid
+                    connection.commit()
+            except Exception as error:
+                messagebox.showerror("Call unavailable", f"Could not start the call:\n{error}")
+                self.destroy()
+                return
 
         self._build_ui()
         self._start_call_sequence()
@@ -326,8 +349,43 @@ class PhoneCallModal(tk.Toplevel):
             return
         self.is_connected = True
         self.call_start_time = time.time()
-        self.status_label.config(text="Connected (Live Audio) 🟢", fg=COLOR_SUCCESS)
+        self.status_label.config(text="Connected (Microphone active) 🟢", fg=COLOR_SUCCESS)
+        if self.call_id and not self.is_outgoing:
+            try:
+                from database.db import get_connection
+                with get_connection() as connection:
+                    connection.execute(
+                        "UPDATE calls SET status = 'answered', answered_at = CURRENT_TIMESTAMP WHERE id = ?",
+                        (self.call_id,),
+                    )
+                    connection.commit()
+            except Exception as error:
+                messagebox.showerror("Call update failed", str(error))
+        self._start_microphone()
         self._tick_timer()
+
+    def _start_microphone(self):
+        try:
+            import sounddevice as sd
+
+            def audio_callback(indata, outdata, _frames, _time_info, _status):
+                if self.is_muted:
+                    outdata.fill(0)
+                else:
+                    outdata[:] = indata
+
+            self.audio_stream = sd.Stream(
+                samplerate=44100, channels=1, dtype="float32",
+                callback=audio_callback,
+            )
+            self.audio_stream.start()
+        except (ImportError, OSError, RuntimeError, ValueError) as error:
+            self.status_label.config(text="Connected (audio unavailable)", fg=COLOR_WARNING)
+            messagebox.showwarning(
+                "Microphone unavailable",
+                f"The call is connected, but microphone loopback could not start:\n{error}\n\n"
+                "Install the desktop requirements and check microphone permission.",
+            )
 
     def _tick_timer(self):
         if not self.is_connected:
@@ -348,6 +406,22 @@ class PhoneCallModal(tk.Toplevel):
     def _end_call(self):
         if self.timer_job:
             self.after_cancel(self.timer_job)
+        self.is_connected = False
+        if self.audio_stream:
+            self.audio_stream.stop()
+            self.audio_stream.close()
+            self.audio_stream = None
+        if self.call_id:
+            try:
+                from database.db import get_connection
+                with get_connection() as connection:
+                    connection.execute(
+                        "UPDATE calls SET status = 'ended', ended_at = CURRENT_TIMESTAMP WHERE id = ?",
+                        (self.call_id,),
+                    )
+                    connection.commit()
+            except Exception as error:
+                messagebox.showerror("Call update failed", str(error))
         mins, secs = divmod(self.call_duration_seconds, 60)
         duration_str = f"{mins}m {secs}s" if mins > 0 else f"{secs}s"
         messagebox.showinfo(
@@ -355,6 +429,34 @@ class PhoneCallModal(tk.Toplevel):
             f"Call with {self.contact_name} ({self.role_title}) has ended.\nDuration: {duration_str}"
         )
         self.destroy()
+
+
+def monitor_incoming_calls(page):
+    """Poll the shared database so desktop employees receive calls while online."""
+    if not page.winfo_exists():
+        return
+    if not getattr(page, "_active_call_modal", None):
+        try:
+            from database.db import get_connection
+            with get_connection() as connection:
+                call = connection.execute(
+                    "SELECT c.id, u.name, u.phone, u.role, u.image_path "
+                    "FROM calls c JOIN users u ON u.id = c.caller_id "
+                    "WHERE c.receiver_id = ? AND c.status = 'ringing' "
+                    "ORDER BY c.created_at LIMIT 1",
+                    (page.current_user["id"],),
+                ).fetchone()
+            if call:
+                page._active_call_modal = PhoneCallModal(
+                    page, call["name"], call["phone"], call["role"],
+                    call["image_path"], call_id=call["id"],
+                )
+                page._active_call_modal.bind(
+                    "<Destroy>", lambda _event: setattr(page, "_active_call_modal", None)
+                )
+        except Exception as error:
+            messagebox.showerror("Incoming call error", str(error))
+    page.after(2500, lambda: monitor_incoming_calls(page))
 
 
 class MetricCard(tk.Frame):

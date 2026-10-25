@@ -31,7 +31,7 @@ from utils.theme import (
     SYSTEM_NAME, SYSTEM_SUBTITLE, SYSTEM_SLOGAN
 )
 from utils.image_loader import load_image, get_icon_logo
-from utils.components import MetricCard, HotelMapWidget, PhoneCallModal, add_table_filter
+from utils.components import MetricCard, HotelMapWidget, PhoneCallModal, add_table_filter, monitor_incoming_calls
 from utils.logger import log_auth_event
 
 LOGISTICS_AUTH_CODE = "QUEST-LOG-2026"
@@ -56,6 +56,7 @@ class StaffPage(tk.Frame):
 
         self._build_layout()
         self._switch_tab(self.default_tab)
+        monitor_incoming_calls(self)
 
     def _build_layout(self):
         # ------------------ TOP APP HEADER ------------------
@@ -820,6 +821,10 @@ class StaffPage(tk.Frame):
             lbl_p_phone.config(text=f"📞 {staff_dict.get('phone', 'No number')}")
             selected_user_state["staff"] = staff_dict
 
+        directory_search = tk.StringVar()
+        tk.Label(left_card, text="Search staff:", font=(FONT_FAMILY, 9, "bold"), fg=COLOR_TEXT_MUTED, bg=COLOR_WHITE).pack(anchor="w")
+        tk.Entry(left_card, textvariable=directory_search, font=FONT_SMALL, relief="solid", bd=1).pack(fill="x", pady=(2, 8), ipady=4)
+
         canvas = tk.Canvas(left_card, bg=COLOR_WHITE, highlightthickness=0)
         scroll = ttk.Scrollbar(left_card, orient="vertical", command=canvas.yview)
         s_list = tk.Frame(canvas, bg=COLOR_WHITE)
@@ -868,15 +873,35 @@ class StaffPage(tk.Frame):
                 padx=8,
                 pady=2,
                 cursor="hand2",
-                command=lambda name=s_dict["name"], ph=s_dict["phone"], role=s_dict["role"], img=s_dict["image_path"], staff=s_dict, rw=row_box: (
+                command=lambda name=s_dict["name"], ph=s_dict["phone"], role=s_dict["role"], img=s_dict["image_path"], uid=s_dict["id"], staff=s_dict, rw=row_box: (
                     highlight_staff(staff, rw),
-                    PhoneCallModal(self, name, ph, role, img)
+                    PhoneCallModal(self, name, ph, role, img, uid)
                 )
             )
             call_btn.pack(side="right", padx=6)
 
             if idx == 0:
                 highlight_staff(s_dict, row_box)
+
+        def filter_directory(*_):
+            query = directory_search.get().strip().casefold()
+            for row_box in selected_user_state["row_widgets"]:
+                row_text = " ".join(
+                    str(widget.cget("text")) for widget in row_box.winfo_children()
+                    if isinstance(widget, tk.Label)
+                ).casefold()
+                nested_text = " ".join(
+                    str(child.cget("text"))
+                    for child in row_box.winfo_children()
+                    for child in (child.winfo_children() if isinstance(child, tk.Frame) else [])
+                    if isinstance(child, tk.Label)
+                ).casefold()
+                if query in f"{row_text} {nested_text}":
+                    row_box.pack(fill="x", pady=2)
+                else:
+                    row_box.pack_forget()
+
+        directory_search.trace_add("write", filter_directory)
 
         # Right: Dispatch feed and composer
         right_card = tk.Frame(panes, bg=COLOR_WHITE, padx=14, pady=10, highlightthickness=1, highlightbackground=COLOR_BORDER)
@@ -896,6 +921,17 @@ class StaffPage(tk.Frame):
             cursor="hand2",
             command=self._show_dispatch_modal
         ).pack(anchor="w", pady=(0, 10))
+
+        message_search = tk.StringVar()
+        tk.Label(
+            right_card, text="Search messages:", font=(FONT_FAMILY, 9, "bold"),
+            fg=COLOR_TEXT_MUTED, bg=COLOR_WHITE
+        ).pack(anchor="w")
+        tk.Entry(
+            right_card, textvariable=message_search, font=FONT_SMALL,
+            relief="solid", bd=1
+        ).pack(fill="x", pady=(0, 8), ipady=4)
+        message_cards = []
 
         m_canvas = tk.Canvas(right_card, bg=COLOR_BG, highlightthickness=0)
         m_scroll = ttk.Scrollbar(right_card, orient="vertical", command=m_canvas.yview)
@@ -930,6 +966,19 @@ class StaffPage(tk.Frame):
             tk.Label(top, text=str(m["timestamp"])[:16], font=(FONT_FAMILY, 8), fg=COLOR_TEXT_MUTED, bg=COLOR_WHITE).pack(side="right")
 
             tk.Label(m_card, text=m["content"], font=(FONT_FAMILY, 9), fg=COLOR_TEXT_NORMAL, bg=COLOR_WHITE, wraplength=400, justify="left").pack(anchor="w", pady=(3, 0))
+            message_cards.append((m_card, " ".join(str(value or "") for value in (
+                m["sender_name"], m["sender_role"], m["receiver_role"], m["content"], m["timestamp"]
+            )).casefold()))
+
+        def filter_messages(*_):
+            query = message_search.get().strip().casefold()
+            for card, text in message_cards:
+                if query in text:
+                    card.pack(fill="x", pady=3)
+                else:
+                    card.pack_forget()
+
+        message_search.trace_add("write", filter_messages)
 
     def _show_dispatch_modal(self):
         modal = tk.Toplevel(self)
