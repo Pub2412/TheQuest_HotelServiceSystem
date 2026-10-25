@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Quest Hotel - Sign in</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}">
+</head>
+<body class="login-page">
+  <main class="card login-card">
+    <img class="logo" src="{{ url_for('assets', filename='imgs/logo/logo.png') }}" alt="The Quest Hotel logo">
+    <h1>The Quest Hotel</h1>
+    <p class="muted">Mobile staff portal</p>
+    {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+    <form method="post">
+      <label>Username<input name="username" autocomplete="username" required></label>
+      <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+      <button type="submit">Sign in</button>
+    </form>
+  </main>
+</body>
+</html>

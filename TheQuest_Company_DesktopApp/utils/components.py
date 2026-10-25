@@ -10,6 +10,7 @@ Includes:
 import tkinter as tk
 from tkinter import ttk, messagebox
 import time
+import re
 from pathlib import Path
 from PIL import Image, ImageTk
 
@@ -74,6 +75,49 @@ def add_table_filter(parent, tree, columns=None):
     column_menu.pack(side="left", padx=(0, 8))
 
     all_items = []
+    sort_column = None
+    sort_reverse = False
+
+    def sort_key(value):
+        """Sort numeric-looking table values numerically and other values naturally."""
+        text = str(value or "").strip()
+        numeric_text = re.sub(r"[^\d.-]", "", text)
+        try:
+            return (0, float(numeric_text))
+        except ValueError:
+            return (1, text.casefold())
+
+    def sort_by_column(column):
+        nonlocal sort_column, sort_reverse
+
+        if sort_column == column:
+            sort_reverse = not sort_reverse
+        else:
+            sort_column = column
+            sort_reverse = False
+
+        sorted_items = sorted(
+            all_items,
+            key=lambda item_id: sort_key(tree.set(item_id, column)),
+            reverse=sort_reverse
+        )
+        all_items[:] = sorted_items
+        for index, item_id in enumerate(sorted_items):
+            tree.move(item_id, "", index)
+        apply_filter()
+
+        for current_column in columns:
+            heading = tree.heading(current_column, "text")
+            heading = re.sub(r" [<>]$", "", heading)
+            if current_column == column:
+                heading += " <" if sort_reverse else " >"
+            tree.heading(current_column, text=heading)
+
+    for column in columns:
+        tree.heading(
+            column,
+            command=lambda selected_column=column: sort_by_column(selected_column)
+        )
 
     def refresh():
         for item_id in all_items:
@@ -645,6 +689,10 @@ class HotelMapWidget(tk.Frame):
             if self.utilities_mode:
                 # Utilities CANNOT see empty rooms (no one checked in)
                 if status == "Vacant":
+                    continue
+                if selected_filter == "Occupied & Needs Service" and status not in {
+                    "Occupied", "Needs Service"
+                }:
                     continue
                 if selected_filter == "Occupied" and status != "Occupied":
                     continue

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Quest Hotel - {{ title }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><img src="{{ url_for('assets', filename='imgs/logo/logo.png') }}" alt=""><span><strong>The Quest Hotel</strong><small>{{ current_user.role }}</small></span></div>
+    <form method="post" action="{{ url_for('logout') }}"><button class="signout" type="submit">Sign out</button></form>
+  </header>
+  <main class="app-shell">
+    <nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('room_map') }}">Room map</a>{% for label, endpoint in actions %}<a href="{{ url_for(endpoint) }}">{{ label }}</a>{% endfor %}</nav>
+    <div class="content">
+    {% if form %}
+    <section class="card action-card">
+      <form method="post" action="{{ form.get('action_template', request.path).replace('{reservation_id}', request.form.get('reservation_id', '')) }}">
+        {% if form.action %}<input type="hidden" name="action" value="{{ form.action }}">{% endif %}
+        {% for field in form.fields %}
+          {% set name = field[0] %}{% set label = field[1] %}{% set input_type = field[2] %}
+          <label>{{ label }}{% if input_type == "textarea" %}<textarea name="{{ name }}" required></textarea>{% elif input_type == "select" %}<select name="{{ name }}" required><option value="">Choose recipient</option>{% for option in field[3] %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select>{% else %}<input name="{{ name }}" type="{{ input_type }}" required>{% endif %}</label>
+        {% endfor %}
+        <button type="submit">{{ form.submit }}</button>
+      </form>
+    </section>
+    {% endif %}
+    <section class="card"><h1>{{ title }}</h1><p class="muted">{{ description }}</p>
+      <div class="table-wrap"><table><thead><tr>{% for column in columns %}<th>{{ column }}</th>{% endfor %}</tr></thead>
+      <tbody>{% for row in rows %}<tr>{% for value in row %}<td>{{ value if value is not none else "N/A" }}</td>{% endfor %}</tr>{% else %}<tr><td colspan="{{ columns|length }}">No records found.</td></tr>{% endfor %}</tbody></table></div>
+    </section>
+    </div>
+  </main>
+</body>
+</html>

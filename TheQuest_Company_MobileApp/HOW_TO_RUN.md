@@ -1,48 +1,28 @@
-# The Quest Android Studio App on a Pixel 6 Emulator
+# The Quest mobile app
 
-This is a native Android Studio/Kotlin application. It does **not** open
-Chrome or another browser. The APK contains a small Flask service that runs
-inside the Android process and the native login screen communicates with it
-over localhost.
+This port uses the recommended deployment model:
 
-## 1. Open and build the Android Studio project
+1. Flask runs on the development computer and uses the shared
+   `database/hotel_service.db`.
+2. The Android APK is a small WebView client.
+3. The launcher detects an authorized emulator or USB-debugged phone, runs
+   `adb reverse tcp:5000 tcp:5000`, builds the APK, installs it, and launches
+   it.
 
-1. Install Android Studio with Android SDK Platform 35 and an Android SDK
-   Build-Tools package.
-2. Open this folder as the project:
-   `TheQuest_Company_MobileApp/android_studio`
-3. Let Gradle sync and accept the Chaquopy Python runtime download.
-4. Choose the **Pixel 6** emulator in the device selector.
-5. Click **Run**.
+## Setup
 
-## 2. Install and launch on the Pixel 6 emulator
+- Install Python and run `pip install -r requirements.txt` from this folder.
+- Install Android SDK Platform 35, Build Tools, Gradle, and Platform-Tools.
+- Add `gradle` and `adb` to `PATH`, or install them in the standard Android SDK
+  locations.
+- For a phone, enable Developer options and USB debugging, connect it, and
+  accept the RSA authorization prompt.
 
-Android Studio builds, installs, and launches the APK directly. No browser and
-no Windows Flask server are required.
+## Start
 
-## 3. Test login
+Run `open_mobile_launcher.bat`, then choose **Build, install & launch**.
+The launcher does not open Android Studio. Select the Pixel 6 emulator in the
+Android Device Manager before deployment, or connect the USB phone first.
 
-Use one of the on-device demo accounts:
-
-   - `admin` / `admin123`
-   - `cashier` / `cashier123`
-   - `kitchen` / `kitchen123`
-   - `logistics` / `logistics123`
-   - `utilities` / `utilities123`
-
-This milestone implements native login first. Dashboards and role screens can
-be migrated to Kotlin after login is verified on the emulator.
-
-## Optional GUI launcher
-
-On Windows, double-click `open_android_launcher.bat`. The launcher can:
-
-- open the `android_studio` project in Android Studio;
-- detect an authorized Pixel emulator or USB-debugged phone;
-- build the debug APK;
-- install the APK with ADB; and
-- build, install, and launch the app in one action.
-
-For a USB phone, enable **Developer options** and **USB debugging**, connect
-the phone, accept the RSA prompt, then click **Refresh** in the launcher.
-Android Studio and Android SDK Platform-Tools must be installed.
+The Flask service is available at `http://localhost:5000` on the PC. The
+emulator uses `10.0.2.2`; an authorized USB device uses the reverse ADB tunnel.

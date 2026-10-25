@@ -1,558 +1,568 @@
-"""
-The Quest Hotel - Mobile Application Portal.
-A full mobile-first port of The Quest Hotel Management System Desktop Application.
-Color Scheme: Royal Velvet Purple (#3B185F), Deep Purple (#23073D), Warm Gold (#F59E0B), Crisp White (#FFFFFF).
-Slogan: "We shall never deny a guest, even the most ridiculous request"
-"""
-
-import os
-import sys
+import hashlib
+import hmac
+import sqlite3
+import time
 from pathlib import Path
-from datetime import datetime
-from functools import wraps
 
-from flask import (
-    Flask, render_template, request, redirect, url_for,
-    session, jsonify, flash, send_from_directory, Response
-)
+from flask import Flask, redirect, render_template, request, send_from_directory, session, url_for
 
-# Set up module resolution
+
 APP_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = APP_DIR.parent
-sys.path.insert(0, str(APP_DIR))
+DATABASE_PATH = PROJECT_ROOT / "database" / "hotel_service.db"
 
-from backend.db import init_database_if_needed, query_db, execute_db
-from backend.auth import (
-    authenticate_user, register_staff_account, get_lockout_status
-)
-from backend.logger import (
-    log_auth_event, log_system_health, read_decrypted_auth_logs, read_system_health_logs
-)
-from backend.admin_service import (
-    get_admin_metrics, get_active_stays_and_alerts, get_floor_rooms,
-    get_inventory_items, restock_inventory_item, get_all_employees,
-    toggle_employee_status, get_all_customers, adjust_customer_points,
-    get_loyalty_rewards, add_loyalty_reward, delete_loyalty_reward,
-    generate_executive_pdf_report
-)
-from backend.cashier_service import (
-    get_all_reservations, get_available_rooms, create_new_reservation,
-    check_in_guest, check_out_guest, change_guest_room, cancel_guest_reservation,
-    create_quick_walkin_guest
-)
-from backend.staff_service import (
-    get_kitchen_orders, update_kitchen_order_status, get_kitchen_inventory,
-    get_logistics_deliveries, update_delivery_status, add_logistics_delivery,
-    get_rooms_needing_service, get_utility_service_requests,
-    mark_room_cleaned_and_ready, update_utility_task_status
-)
-from backend.communication import (
-    get_bulletin_announcements, post_bulletin_announcement,
-    get_user_inbox_messages, send_staff_message, get_softphone_directory
-)
-
-# Assets directory in root workspace
-ASSETS_DIR = PROJECT_ROOT / "assets"
-
-app = Flask(
-    __name__,
-    template_folder=str(APP_DIR / "frontend" / "templates"),
-    static_folder=str(APP_DIR / "frontend" / "static")
-)
-app.secret_key = "thequest_mobile_secured_token_2026_royal_luxury"
-
-# Initialize database schema/data if needed
-init_database_if_needed()
-log_system_health()
+app = Flask(__name__)
+app.secret_key = "the-quest-mobile-development-key"
+app.config["DATABASE"] = str(DATABASE_PATH)
 
 
-# ==============================================================================
-# ASSETS & STATIC FILE SERVING
-# ==============================================================================
-@app.route("/assets/<path:filename>")
-def serve_assets(filename):
-    """Serve shared images, employee portraits, room photos, and HotelMap.jpg."""
-    return send_from_directory(str(ASSETS_DIR), filename)
+def get_connection():
+    connection = sqlite3.connect(app.config["DATABASE"])
+    connection.row_factory = sqlite3.Row
+    return connection
 
 
-@app.route("/manifest.json")
-def serve_manifest():
-    """Serve PWA manifest for mobile add-to-home-screen."""
-    return send_from_directory(str(app.static_folder), "manifest.json", mimetype="application/manifest+json")
+def verify_password(password, stored_hash):
+    if not stored_hash:
+        return False
+    try:
+        if "$" not in stored_hash:
+            return hmac.compare_digest(password, stored_hash)
+        salt_hex, hash_hex = stored_hash.split("$", 1)
+        salt = bytes.fromhex(salt_hex)
+        expected = bytes.fromhex(hash_hex)
+        for iterations in (100_000, 600_000):
+            actual = hashlib.pbkdf2_hmac(
+                "sha256", password.encode("utf-8"), salt, iterations
+            )
+            if hmac.compare_digest(actual, expected):
+                return True
+    except (TypeError, ValueError):
+        return False
+    return False
 
 
-# ==============================================================================
-# GLOBAL TEMPLATE CONTEXT
-# ==============================================================================
 @app.context_processor
-def inject_globals():
-    user = None
-    user_id = session.get("user_id")
-    if user_id:
-        user = query_db("SELECT id, username, role, name, phone, email, image_path FROM users WHERE id = ?", (user_id,), one=True)
-        if not user:
-            session.clear()
-
-    return {
-        "current_user": user,
-        "system_name": "The Quest",
-        "system_subtitle": "Hotel Management System",
-        "system_slogan": "We shall never deny a guest, even the most ridiculous request",
-        "now_year": datetime.now().year,
-        "now_time": datetime.now().strftime("%I:%M %p"),
-        "now_date": datetime.now().strftime("%b %d, %Y")
-    }
+def inject_user():
+    return {"current_user": session.get("user")}
 
 
-# ==============================================================================
-# ACCESS CONTROL DECORATORS
-# ==============================================================================
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get("user_id"):
-            flash("Please sign in with your staff credentials.", "warning")
-            return redirect(url_for("login_view"))
-        return f(*args, **kwargs)
-    return decorated_function
+def login_required(view):
+    def wrapped(*args, **kwargs):
+        if "user" not in session:
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+
+    wrapped.__name__ = view.__name__
+    return wrapped
 
 
-def role_required(*allowed_roles):
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not session.get("user_id"):
-                return redirect(url_for("login_view"))
-            user_role = session.get("user_role", "")
-            if user_role not in allowed_roles:
-                return redirect(url_for("forbidden_view", attempted=request.path))
-            return f(*args, **kwargs)
-        return decorated_function
+def role_required(*roles):
+    def decorator(view):
+        protected = login_required(view)
+
+        def wrapped(*args, **kwargs):
+            user = session.get("user", {})
+            if user.get("role") not in roles:
+                return redirect(url_for("dashboard"))
+            return protected(*args, **kwargs)
+
+        wrapped.__name__ = view.__name__
+        return wrapped
+
     return decorator
 
 
-def role_redirect(role: str):
-    """Determine landing destination for a role."""
-    if role == "Admin":
-        return redirect(url_for("admin_dashboard"))
-    elif role == "Cashier":
-        return redirect(url_for("cashier_reservations"))
-    elif role == "Staff_Kitchen":
-        return redirect(url_for("staff_kitchen"))
-    elif role == "Staff_Logistics":
-        return redirect(url_for("staff_logistics"))
-    elif role == "Staff_Utilities":
-        return redirect(url_for("staff_utilities"))
-    return redirect(url_for("login_view"))
+@app.after_request
+def prevent_cached_pages(response):
+    response.headers["Cache-Control"] = "no-store, max-age=0"
+    return response
 
 
-# ==============================================================================
-# AUTHENTICATION & SECURITY ROUTES
-# ==============================================================================
-@app.route("/")
-def index():
-    if session.get("user_id") and session.get("user_role"):
-        return role_redirect(session["user_role"])
-    return redirect(url_for("login_view"))
+@app.get("/assets/<path:filename>")
+def assets(filename):
+    return send_from_directory(PROJECT_ROOT / "assets", filename)
 
 
-@app.route("/login", methods=["GET", "POST"])
-def login_view():
-    if session.get("user_id") and session.get("user_role"):
-        return role_redirect(session["user_role"])
-
-    client_ip = request.remote_addr or "127.0.0.1"
-
+@app.route("/", methods=["GET", "POST"])
+def login():
+    lockout_until = session.get("lockout_until", 0)
+    if lockout_until > time.time():
+        remaining = int(lockout_until - time.time()) + 1
+        return render_template(
+            "login.html",
+            error=f"Too many failed attempts. Try again in {remaining} seconds.",
+        )
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
-
-        user, err_msg, lockout_secs = authenticate_user(username, password, client_ip)
-        if user:
-            session["user_id"] = user["id"]
-            session["user_role"] = user["role"]
-            session["user_name"] = user["name"]
-            flash(f"Welcome back, {user['name']}!", "success")
-            return role_redirect(user["role"])
-        else:
-            flash(err_msg, "danger")
-            return render_template("login.html", error=err_msg, lockout_secs=lockout_secs, username=username)
-
+        with get_connection() as connection:
+            user = connection.execute(
+                "SELECT id, username, password_hash, role, name "
+                "FROM users WHERE username = ? AND is_active = 1",
+                (username,),
+            ).fetchone()
+        if user and verify_password(password, user["password_hash"]):
+            session.pop("failed_attempts", None)
+            session.pop("lockout_until", None)
+            session["user"] = {
+                "id": user["id"],
+                "username": user["username"],
+                "role": user["role"],
+                "name": user["name"],
+            }
+            return redirect(url_for("dashboard"))
+        failed_attempts = session.get("failed_attempts", 0) + 1
+        session["failed_attempts"] = failed_attempts
+        if failed_attempts >= 3:
+            session["failed_attempts"] = 0
+            session["lockout_until"] = time.time() + 60
+        return render_template("login.html", error="Invalid username or password.")
     return render_template("login.html")
 
 
-@app.route("/register", methods=["GET", "POST"])
-def register_view():
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        password = request.form.get("password", "")
-        role = request.form.get("role", "")
-        name = request.form.get("name", "").strip()
-        phone = request.form.get("phone", "").strip()
-        email = request.form.get("email", "").strip()
-
-        ok, msg = register_staff_account(username, password, role, name, phone, email)
-        if ok:
-            flash("Staff account created successfully! You may now sign in.", "success")
-            return redirect(url_for("login_view"))
-        else:
-            flash(msg, "danger")
-
-    return render_template("register.html")
-
-
-@app.route("/logout")
-def logout_view():
-    user_name = session.get("user_name", "Staff")
-    user_role = session.get("user_role", "Unknown")
-    log_auth_event("LOGOUT", user_name, user_role, "SUCCESS", "User signed out from mobile portal")
+@app.route("/logout", methods=["GET", "POST"])
+def logout():
     session.clear()
-    flash("You have been signed out.", "info")
-    return redirect(url_for("login_view"))
+    response = redirect(url_for("login"))
+    response.delete_cookie("session")
+    return response
 
 
-@app.route("/forbidden")
-def forbidden_view():
-    attempted = request.args.get("attempted", "Protected Console")
-    return render_template("forbidden.html", attempted_page=attempted), 403
-
-
-# ==============================================================================
-# ADMIN CONSOLE (Role: Admin)
-# ==============================================================================
-@app.route("/admin")
-@app.route("/admin/dashboard")
+@app.get("/dashboard")
 @login_required
-@role_required("Admin")
-def admin_dashboard():
-    metrics = get_admin_metrics()
-    active_stays = get_active_stays_and_alerts()
-    return render_template("admin/dashboard.html", metrics=metrics, active_stays=active_stays)
+def dashboard():
+    with get_connection() as connection:
+        metrics = {
+            "rooms": connection.execute("SELECT COUNT(*) FROM rooms").fetchone()[0],
+            "occupied": connection.execute(
+                "SELECT COUNT(*) FROM rooms WHERE status = 'Occupied'"
+            ).fetchone()[0],
+            "vacant": connection.execute(
+                "SELECT COUNT(*) FROM rooms WHERE status = 'Vacant'"
+            ).fetchone()[0],
+            "pending": connection.execute(
+                "SELECT COUNT(*) FROM reservations WHERE status = 'Pending'"
+            ).fetchone()[0],
+        }
+        rooms = connection.execute(
+            "SELECT room_number, type, price_per_night, status "
+            "FROM rooms ORDER BY room_number"
+        ).fetchall()
+    return render_template("dashboard.html", metrics=metrics, rooms=rooms)
 
 
-@app.route("/admin/export-pdf")
-@login_required
-@role_required("Admin")
-def admin_export_pdf():
-    admin_name = session.get("user_name", "System Administrator")
-    pdf_bytes = generate_executive_pdf_report(admin_name)
-    now_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"TheQuest_Executive_Audit_{now_str}.pdf"
-    return Response(
-        pdf_bytes,
-        mimetype="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+def render_data_page(title, description, columns, rows, actions=None, form=None):
+    return render_template(
+        "page.html",
+        title=title,
+        description=description,
+        columns=columns,
+        rows=rows,
+        actions=actions or [],
+        form=form,
     )
 
 
-@app.route("/admin/map")
-@login_required
+@app.get("/admin/analytics")
 @role_required("Admin")
-def admin_map():
-    floor = request.args.get("floor", type=int)
-    status_filter = request.args.get("status", "All")
-    rooms = get_floor_rooms(utilities_mode=False, floor=floor, status_filter=status_filter)
-    return render_template("admin/map.html", rooms=rooms, current_floor=floor, current_status=status_filter)
-
-
-@app.route("/admin/inventory", methods=["GET", "POST"])
-@login_required
-@role_required("Admin")
-def admin_inventory():
-    if request.method == "POST":
-        item_id = request.form.get("item_id", type=int)
-        added_qty = request.form.get("added_qty", type=int, default=0)
-        unit_cost = request.form.get("unit_cost", type=float, default=0.0)
-        if item_id and added_qty > 0:
-            admin_name = session.get("user_name", "Admin")
-            if restock_inventory_item(item_id, added_qty, unit_cost, admin_name):
-                flash(f"Successfully restocked {added_qty} units.", "success")
-            else:
-                flash("Could not complete restock.", "danger")
-        return redirect(url_for("admin_inventory"))
-
-    cat = request.args.get("category", "All")
-    items = get_inventory_items(cat)
-    return render_template("admin/inventory.html", items=items, current_category=cat)
-
-
-@app.route("/admin/staff", methods=["GET", "POST"])
-@login_required
-@role_required("Admin")
-def admin_staff():
-    if request.method == "POST":
-        action = request.form.get("action")
-        if action == "toggle":
-            uid = request.form.get("user_id", type=int)
-            toggle_employee_status(uid)
-            flash("Staff account status updated.", "info")
-        elif action == "add":
-            username = request.form.get("username", "").strip()
-            password = request.form.get("password", "")
-            role = request.form.get("role", "")
-            name = request.form.get("name", "").strip()
-            phone = request.form.get("phone", "").strip()
-            email = request.form.get("email", "").strip()
-            ok, msg = register_staff_account(username, password, role, name, phone, email)
-            flash(msg, "success" if ok else "danger")
-        return redirect(url_for("admin_staff"))
-
-    employees = get_all_employees()
-    return render_template("admin/staff.html", employees=employees)
-
-
-@app.route("/admin/guests", methods=["GET", "POST"])
-@login_required
-@role_required("Admin")
-def admin_guests():
-    if request.method == "POST":
-        cust_id = request.form.get("customer_id", type=int)
-        points_delta = request.form.get("points_delta", type=int, default=0)
-        if cust_id:
-            adjust_customer_points(cust_id, points_delta)
-            flash(f"Loyalty balance updated by {points_delta:+d} points.", "success")
-        return redirect(url_for("admin_guests"))
-
-    q = request.args.get("q")
-    customers = get_all_customers(q)
-    return render_template("admin/guests.html", customers=customers, search_query=q or "")
+def admin_analytics():
+    with get_connection() as connection:
+        metrics = connection.execute(
+            "SELECT type, COALESCE(SUM(amount), 0) AS total FROM transactions GROUP BY type"
+        ).fetchall()
+        rows = connection.execute(
+            "SELECT date_recorded, type, amount, description "
+            "FROM transactions ORDER BY date_recorded DESC LIMIT 100"
+        ).fetchall()
+    totals = {row["type"]: row["total"] for row in metrics}
+    return render_data_page(
+        "Executive Analytics",
+        f"Revenue: ₱{totals.get('Revenue', 0):,.2f} | "
+        f"Running costs: ₱{totals.get('Cost_Utility', 0) + totals.get('Cost_Goods', 0):,.2f}",
+        ["Date", "Type", "Amount", "Description"], rows,
+        [("Dashboard", "dashboard"), ("Inventory", "admin_inventory"),
+         ("Rewards", "admin_rewards"), ("Bulletin", "bulletin")],
+    )
 
 
 @app.route("/admin/rewards", methods=["GET", "POST"])
-@login_required
 @role_required("Admin")
 def admin_rewards():
     if request.method == "POST":
         action = request.form.get("action")
-        if action == "add":
-            name = request.form.get("reward_name", "").strip()
-            pts = request.form.get("points_required", type=int, default=100)
-            desc = request.form.get("description", "").strip()
-            add_loyalty_reward(name, pts, desc)
-            flash("New loyalty reward created.", "success")
-        elif action == "delete":
-            rid = request.form.get("reward_id", type=int)
-            delete_loyalty_reward(rid)
-            flash("Reward removed from catalog.", "info")
+        with get_connection() as connection:
+            if action == "create":
+                connection.execute(
+                    "INSERT INTO loyalty_rewards (reward_name, points_required, description) "
+                    "VALUES (?, ?, ?)",
+                    (request.form.get("reward_name", "").strip(),
+                     request.form.get("points_required", type=int),
+                     request.form.get("description", "").strip()),
+                )
+            elif action == "delete":
+                connection.execute(
+                    "DELETE FROM loyalty_rewards WHERE id = ?",
+                    (request.form.get("reward_id", type=int),),
+                )
+            connection.commit()
         return redirect(url_for("admin_rewards"))
+    with get_connection() as connection:
+        rows = connection.execute(
+            "SELECT id, reward_name, points_required, description "
+            "FROM loyalty_rewards ORDER BY points_required"
+        ).fetchall()
+    return render_data_page(
+        "Loyalty Rewards", "Manage promotional rewards and point requirements.",
+        ["ID", "Reward", "Points", "Description"], rows,
+        [("Dashboard", "dashboard"), ("Analytics", "admin_analytics"),
+         ("Guests", "admin_guests")],
+        {"action": "create", "submit": "Add reward", "fields": [
+            ("reward_name", "Reward name", "text"),
+            ("points_required", "Points required", "number"),
+            ("description", "Description", "textarea"),
+        ]},
+    )
 
-    rewards = get_loyalty_rewards()
-    return render_template("admin/rewards.html", rewards=rewards)
 
-
-@app.route("/admin/logs")
-@login_required
+@app.route("/admin/inventory", methods=["GET", "POST"])
 @role_required("Admin")
-def admin_logs():
-    auth_logs = read_decrypted_auth_logs(limit=40)
-    health_logs = read_system_health_logs(limit=25)
-    return render_template("admin/logs.html", auth_logs=auth_logs, health_logs=health_logs)
+def admin_inventory():
+    if request.method == "POST":
+        item_id = request.form.get("item_id", type=int)
+        quantity = request.form.get("quantity", type=int)
+        if item_id and quantity and quantity > 0:
+            with get_connection() as connection:
+                item = connection.execute(
+                    "SELECT item_name, cost_per_unit FROM inventory WHERE id = ?",
+                    (item_id,),
+                ).fetchone()
+                if item:
+                    connection.execute(
+                        "UPDATE inventory SET quantity = quantity + ? WHERE id = ?",
+                        (quantity, item_id),
+                    )
+                    connection.execute(
+                        "INSERT INTO transactions (type, amount, description) "
+                        "VALUES ('Cost_Goods', ?, ?)",
+                        (quantity * (item["cost_per_unit"] or 0),
+                         f"Restocked {quantity} {item['item_name']}"),
+                    )
+                    connection.commit()
+        return redirect(url_for("admin_inventory"))
+    with get_connection() as connection:
+        rows = connection.execute(
+            "SELECT id, item_name, category, quantity, unit, low_stock_threshold "
+            "FROM inventory ORDER BY item_name"
+        ).fetchall()
+    return render_data_page(
+        "Inventory", "Manage kitchen and utility stock.",
+        ["ID", "Item", "Category", "Quantity", "Unit", "Threshold"],
+        rows, [("Dashboard", "dashboard"), ("Staff", "admin_staff"), ("Guests", "admin_guests")],
+        {"fields": [("item_id", "Inventory ID", "number"), ("quantity", "Quantity to add", "number")],
+         "submit": "Restock inventory"},
+    )
 
 
-# ==============================================================================
-# CASHIER FRONT DESK (Role: Cashier, Admin)
-# ==============================================================================
-@app.route("/cashier")
-@app.route("/cashier/reservations", methods=["GET", "POST"])
-@login_required
-@role_required("Cashier", "Admin")
+@app.route("/admin/staff", methods=["GET", "POST"])
+@role_required("Admin")
+def admin_staff():
+    if request.method == "POST":
+        action = request.form.get("action")
+        with get_connection() as connection:
+            if action == "create":
+                username = request.form.get("username", "").strip()
+                name = request.form.get("name", "").strip()
+                role = request.form.get("role", "")
+                password = request.form.get("password", "")
+                if username and name and role and password:
+                    salt = hashlib.sha256(password.encode("utf-8")).digest()[:16]
+                    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100_000)
+                    connection.execute(
+                        "INSERT OR IGNORE INTO users "
+                        "(username, password_hash, role, name, phone, email) VALUES (?, ?, ?, ?, ?, ?)",
+                        (username, f"{salt.hex()}${digest.hex()}", role, name,
+                         request.form.get("phone"), request.form.get("email")),
+                    )
+            elif action == "toggle":
+                connection.execute(
+                    "UPDATE users SET is_active = CASE is_active WHEN 1 THEN 0 ELSE 1 END "
+                    "WHERE id = ?", (request.form.get("user_id", type=int),)
+                )
+            connection.commit()
+        return redirect(url_for("admin_staff"))
+    with get_connection() as connection:
+        rows = connection.execute(
+            "SELECT name, username, role, phone, email FROM users ORDER BY name"
+        ).fetchall()
+    return render_data_page(
+        "Staff", "Employee accounts and roles.",
+        ["Name", "Username", "Role", "Phone", "Email"],
+        rows, [("Dashboard", "dashboard"), ("Inventory", "admin_inventory"), ("Guests", "admin_guests")],
+        {"action": "create", "submit": "Create staff account", "fields": [
+            ("name", "Name", "text"), ("username", "Username", "text"),
+            ("password", "Temporary password", "password"),
+            ("role", "Role (Admin/Cashier/Staff_Kitchen/Staff_Logistics/Staff_Utilities)", "text"),
+            ("phone", "Phone", "tel"), ("email", "Email", "email"),
+        ]},
+    )
+
+
+@app.route("/admin/guests", methods=["GET", "POST"])
+@role_required("Admin")
+def admin_guests():
+    if request.method == "POST":
+        customer_id = request.form.get("customer_id", type=int)
+        points = request.form.get("points", type=int)
+        if customer_id is not None and points is not None:
+            with get_connection() as connection:
+                connection.execute(
+                    "UPDATE customers SET loyalty_points = ? WHERE id = ?",
+                    (max(0, points), customer_id),
+                )
+                connection.commit()
+        return redirect(url_for("admin_guests"))
+    with get_connection() as connection:
+        rows = connection.execute(
+            "SELECT id, name, email, mobile_number, loyalty_points FROM customers ORDER BY name"
+        ).fetchall()
+    return render_data_page(
+        "Guests", "Registered hotel customers.",
+        ["ID", "Name", "Email", "Mobile", "Points"],
+        rows, [("Dashboard", "dashboard"), ("Inventory", "admin_inventory"), ("Staff", "admin_staff")],
+        {"fields": [("customer_id", "Customer ID", "number"), ("points", "New loyalty points", "number")],
+         "submit": "Update loyalty points"},
+    )
+
+
+@app.get("/cashier/reservations")
+@role_required("Cashier")
 def cashier_reservations():
-    cashier_name = session.get("user_name", "Front Desk")
+    with get_connection() as connection:
+        rows = connection.execute(
+            "SELECT res.id, c.name, r.room_number, res.check_in_date, "
+            "res.check_out_date, res.status FROM reservations res "
+            "JOIN customers c ON c.id = res.customer_id "
+            "JOIN rooms r ON r.id = res.room_id ORDER BY res.id DESC"
+        ).fetchall()
+    return render_data_page(
+        "Reservations", "Manage guest bookings and check-in status.",
+        ["Reservation", "Guest", "Room", "Check-in", "Check-out", "Status"],
+        rows, [("Dashboard", "dashboard"), ("Guests", "cashier_guests")],
+        {"submit": "Update reservation status", "action_template": "/cashier/reservations/status",
+         "fields": [
+            ("reservation_id", "Reservation ID", "number"),
+            ("status", "New status (Pending/Checked In/Checked Out/Canceled)", "text"),
+        ]},
+    )
 
-    if request.method == "POST":
-        action = request.form.get("action")
 
-        if action == "check_in":
-            res_id = request.form.get("reservation_id", type=int)
-            ok, msg = check_in_guest(res_id, cashier_name)
-            flash(msg, "success" if ok else "danger")
-
-        elif action == "check_out":
-            res_id = request.form.get("reservation_id", type=int)
-            ok, msg, summary = check_out_guest(res_id, cashier_name)
-            flash(msg, "success" if ok else "danger")
-
-        elif action == "cancel":
-            res_id = request.form.get("reservation_id", type=int)
-            ok, msg = cancel_guest_reservation(res_id, cashier_name)
-            flash(msg, "info" if ok else "danger")
-
-        elif action == "change_room":
-            res_id = request.form.get("reservation_id", type=int)
-            new_room_id = request.form.get("new_room_id", type=int)
-            ok, msg = change_guest_room(res_id, new_room_id, cashier_name)
-            flash(msg, "success" if ok else "danger")
-
-        elif action == "new_walkin":
-            guest_name = request.form.get("guest_name", "").strip()
-            guest_email = request.form.get("guest_email", "").strip()
-            guest_phone = request.form.get("guest_phone", "").strip()
-            room_id = request.form.get("room_id", type=int)
-            ci = request.form.get("check_in_date")
-            co = request.form.get("check_out_date")
-            immediate = request.form.get("immediate_checkin") == "1"
-
-            ok_guest, g_msg, cust_id = create_quick_walkin_guest(guest_name, guest_email, guest_phone)
-            if ok_guest and cust_id:
-                ok_res, res_msg, _ = create_new_reservation(cust_id, room_id, ci, co, immediate, cashier_name)
-                flash(res_msg, "success" if ok_res else "danger")
-            else:
-                flash(g_msg, "danger")
-
+@app.post("/cashier/reservations/<int:reservation_id>/status")
+@role_required("Cashier")
+def update_reservation_status(reservation_id):
+    new_status = request.form.get("status")
+    if new_status not in {"Pending", "Checked In", "Checked Out", "Canceled"}:
         return redirect(url_for("cashier_reservations"))
-
-    status = request.args.get("status", "All")
-    search = request.args.get("q")
-    reservations = get_all_reservations(status, search)
-    vacant_rooms = get_available_rooms()
-    return render_template("cashier/reservations.html", reservations=reservations, vacant_rooms=vacant_rooms, current_status=status, search_query=search or "")
-
-
-@app.route("/cashier/map")
-@login_required
-@role_required("Cashier", "Admin")
-def cashier_map():
-    floor = request.args.get("floor", type=int)
-    status_filter = request.args.get("status", "All")
-    rooms = get_floor_rooms(utilities_mode=False, floor=floor, status_filter=status_filter)
-    return render_template("cashier/map.html", rooms=rooms, current_floor=floor, current_status=status_filter)
+    with get_connection() as connection:
+        connection.execute(
+            "UPDATE reservations SET status = ? WHERE id = ?",
+            (new_status, reservation_id),
+        )
+        connection.commit()
+    return redirect(url_for("cashier_reservations"))
 
 
-@app.route("/cashier/guests")
-@login_required
-@role_required("Cashier", "Admin")
+@app.post("/cashier/reservations/status")
+@role_required("Cashier")
+def update_reservation_status_from_form():
+    reservation_id = request.form.get("reservation_id", type=int)
+    return update_reservation_status(reservation_id or 0)
+
+
+@app.get("/cashier/guests")
+@role_required("Cashier")
 def cashier_guests():
-    q = request.args.get("q")
-    customers = get_all_customers(q)
-    return render_template("cashier/guests.html", customers=customers, search_query=q or "")
+    with get_connection() as connection:
+        rows = connection.execute(
+            "SELECT c.name, c.email, c.mobile_number, "
+            "COALESCE(r.room_number, 'Not Checked In') AS room "
+            "FROM customers c LEFT JOIN reservations res "
+            "ON res.customer_id = c.id AND res.status = 'Checked In' "
+            "LEFT JOIN rooms r ON r.id = res.room_id ORDER BY c.name"
+        ).fetchall()
+    return render_data_page(
+        "Guests", "Guest directory and active stays.",
+        ["Name", "Email", "Mobile", "Room"],
+        rows, [("Dashboard", "dashboard"), ("Reservations", "cashier_reservations")],
+    )
 
 
-# ==============================================================================
-# STAFF OPERATIONS (Kitchen, Logistics, Utilities)
-# ==============================================================================
-@app.route("/staff/kitchen", methods=["GET", "POST"])
-@login_required
-@role_required("Staff_Kitchen", "Admin")
-def staff_kitchen():
-    staff_name = session.get("user_name", "Kitchen Staff")
-    if request.method == "POST":
-        req_id = request.form.get("request_id", type=int)
-        new_status = request.form.get("new_status")
-        ok, msg = update_kitchen_order_status(req_id, new_status, staff_name)
-        flash(msg, "success" if ok else "danger")
-        return redirect(url_for("staff_kitchen"))
-
-    orders = get_kitchen_orders()
-    inventory = get_kitchen_inventory()
-    return render_template("staff/kitchen.html", orders=orders, inventory=inventory)
-
-
-@app.route("/staff/logistics", methods=["GET", "POST"])
-@login_required
-@role_required("Staff_Logistics", "Admin")
-def staff_logistics():
-    staff_name = session.get("user_name", "Logistics Officer")
-    if request.method == "POST":
-        action = request.form.get("action")
-        if action == "update_status":
-            del_id = request.form.get("delivery_id", type=int)
-            new_status = request.form.get("new_status")
-            passcode = request.form.get("passcode", "")
-            ok, msg = update_delivery_status(del_id, new_status, passcode, staff_name)
-            flash(msg, "success" if ok else "danger")
-        elif action == "new_delivery":
-            desc = request.form.get("description", "").strip()
-            code = request.form.get("logistics_code", "").strip()
-            init_stat = request.form.get("status", "Will be Shipped")
-            add_logistics_delivery(desc, code, init_stat)
-            flash("Shipment recorded.", "success")
-        return redirect(url_for("staff_logistics"))
-
-    status = request.args.get("status", "All")
-    deliveries = get_logistics_deliveries(status)
-    return render_template("staff/logistics.html", deliveries=deliveries, current_status=status)
-
-
-@app.route("/staff/utilities", methods=["GET", "POST"])
-@login_required
-@role_required("Staff_Utilities", "Admin")
-def staff_utilities():
-    staff_name = session.get("user_name", "Housekeeping Attendant")
-    if request.method == "POST":
-        action = request.form.get("action")
-        if action == "clean_room":
-            room_id = request.form.get("room_id", type=int)
-            ok, msg = mark_room_cleaned_and_ready(room_id, staff_name)
-            flash(msg, "success" if ok else "danger")
-        elif action == "update_task":
-            task_id = request.form.get("task_id", type=int)
-            new_stat = request.form.get("new_status")
-            ok, msg = update_utility_task_status(task_id, new_stat, staff_name)
-            flash(msg, "success" if ok else "danger")
-        return redirect(url_for("staff_utilities"))
-
-    dirty_rooms = get_rooms_needing_service()
-    service_tasks = get_utility_service_requests()
-    # Floor map with strictly hidden vacant rooms
-    rooms = get_floor_rooms(utilities_mode=True)
-    return render_template("staff/utilities.html", dirty_rooms=dirty_rooms, service_tasks=service_tasks, rooms=rooms)
-
-
-# ==============================================================================
-# SHARED STAFF MODULES: BULLETIN & INBOX & SOFTPHONE
-# ==============================================================================
 @app.route("/bulletin", methods=["GET", "POST"])
 @login_required
-def bulletin_view():
-    if request.method == "POST":
+def bulletin():
+    if request.method == "POST" and session["user"]["role"] == "Admin":
         title = request.form.get("title", "").strip()
         content = request.form.get("content", "").strip()
-        author_id = session.get("user_id")
-        if title and content and author_id:
-            post_bulletin_announcement(author_id, title, content)
-            flash("Announcement posted to company bulletin.", "success")
-            return redirect(url_for("bulletin_view"))
-        flash("Title and message content cannot be empty.", "warning")
-
-    posts = get_bulletin_announcements()
-    return render_template("shared/bulletin.html", posts=posts)
+        if title and content:
+            with get_connection() as connection:
+                connection.execute(
+                    "INSERT INTO bulletin (author_id, title, content) VALUES (?, ?, ?)",
+                    (session["user"]["id"], title, content),
+                )
+                connection.commit()
+        return redirect(url_for("bulletin"))
+    with get_connection() as connection:
+        rows = connection.execute(
+            "SELECT b.title, b.content, u.name, b.timestamp "
+            "FROM bulletin b LEFT JOIN users u ON u.id = b.author_id "
+            "ORDER BY b.timestamp DESC"
+        ).fetchall()
+    form = None
+    if session["user"]["role"] == "Admin":
+        form = {"submit": "Post announcement", "fields": [
+            ("title", "Announcement title", "text"),
+            ("content", "Announcement", "textarea"),
+        ]}
+    return render_data_page(
+        "Employee Bulletin", "Official announcements for hotel employees.",
+        ["Title", "Message", "Author", "Posted"], rows,
+        [("Dashboard", "dashboard"), ("Inbox", "inbox")], form,
+    )
 
 
 @app.route("/inbox", methods=["GET", "POST"])
 @login_required
-def inbox_view():
-    user_id = session.get("user_id")
-    user_role = session.get("user_role", "")
-
+def inbox():
+    user_id = session["user"]["id"]
     if request.method == "POST":
+        receiver_role = request.form.get("receiver_role", "").strip()
         content = request.form.get("content", "").strip()
-        receiver_id = request.form.get("receiver_id", type=int)
-        receiver_role = request.form.get("receiver_role")
+        if receiver_role and content:
+            with get_connection() as connection:
+                receiver = connection.execute(
+                    "SELECT id FROM users WHERE role = ? AND is_active = 1 "
+                    "ORDER BY id LIMIT 1", (receiver_role,),
+                ).fetchone()
+                connection.execute(
+                    "INSERT INTO messages (sender_id, receiver_id, receiver_role, content) "
+                    "VALUES (?, ?, ?, ?)",
+                    (user_id, receiver["id"] if receiver else None, receiver_role, content),
+                )
+                connection.commit()
+        return redirect(url_for("inbox"))
+    with get_connection() as connection:
+        recipient_roles = [
+            row["role"] for row in connection.execute(
+                "SELECT DISTINCT role FROM users WHERE is_active = 1 "
+                "AND role <> ? ORDER BY role", (session["user"]["role"],)
+            ).fetchall()
+        ]
+        rows = connection.execute(
+            "SELECT m.content, COALESCE(s.name, m.receiver_role) AS recipient, "
+            "m.timestamp FROM messages m LEFT JOIN users s ON s.id = m.sender_id "
+            "WHERE m.sender_id = ? OR m.receiver_id = ? OR m.receiver_role = ? "
+            "ORDER BY m.timestamp DESC",
+            (user_id, user_id, session["user"]["role"]),
+        ).fetchall()
+    return render_data_page(
+        "Employee Inbox", "Send and review staff messages.",
+        ["Message", "Recipient", "Time"], rows,
+        [("Dashboard", "dashboard"), ("Bulletin", "bulletin")],
+        {"submit": "Send message", "fields": [
+            ("receiver_role", "Recipient role", "select", recipient_roles),
+            ("content", "Message", "textarea"),
+        ]},
+    )
 
-        if content:
-            send_staff_message(user_id, content, receiver_id, receiver_role)
-            flash("Message dispatched.", "success")
-            return redirect(url_for("inbox_view"))
-        flash("Message content is required.", "warning")
 
-    messages = get_user_inbox_messages(user_id, user_role)
-    contacts = get_softphone_directory(exclude_user_id=user_id)
-    return render_template("shared/inbox.html", messages=messages, contacts=contacts)
-
-
-@app.route("/api/softphone/contacts")
+@app.get("/map")
 @login_required
-def api_softphone_contacts():
-    user_id = session.get("user_id")
-    contacts = get_softphone_directory(exclude_user_id=user_id)
-    return jsonify(contacts)
+def room_map():
+    status = request.args.get("status", "All")
+    with get_connection() as connection:
+        if status == "All":
+            rooms = connection.execute(
+                "SELECT room_number, type, status, price_per_night FROM rooms "
+                "ORDER BY room_number"
+            ).fetchall()
+        else:
+            rooms = connection.execute(
+                "SELECT room_number, type, status, price_per_night FROM rooms "
+                "WHERE status = ? ORDER BY room_number", (status,),
+            ).fetchall()
+    return render_data_page(
+        "Hotel Room Map", "Room occupancy and service status.",
+        ["Room", "Type", "Status", "Rate"], rooms,
+        [("Dashboard", "dashboard"), ("All rooms", "room_map")],
+    )
 
 
-# ==============================================================================
-# MAIN ENTRY POINT
-# ==============================================================================
+@app.route("/staff/<section>", methods=["GET", "POST"])
+@role_required("Staff_Kitchen", "Staff_Logistics", "Staff_Utilities")
+def staff_section(section):
+    role = session["user"]["role"]
+    if request.method == "POST":
+        record_id = request.form.get("record_id", type=int)
+        new_status = request.form.get("status", "")
+        with get_connection() as connection:
+            if role == "Staff_Logistics" and section == "logistics":
+                if request.form.get("logistics_code") != "QUEST-LOG-2026":
+                    return redirect(url_for("staff_section", section=section))
+                if new_status in {"Completed", "Canceled", "On the Way", "Near Receive"}:
+                    connection.execute(
+                        "UPDATE deliveries SET status = ?, date_updated = CURRENT_TIMESTAMP WHERE id = ?",
+                        (new_status, record_id),
+                    )
+            elif role == "Staff_Utilities" and section == "utilities":
+                if new_status in {"Processing", "Complete", "Canceled"}:
+                    connection.execute(
+                        "UPDATE service_requests SET status = ? WHERE id = ?",
+                        (new_status, record_id),
+                    )
+            elif role == "Staff_Kitchen" and section == "kitchen":
+                if new_status in {"Processing", "Complete", "Canceled"}:
+                    connection.execute(
+                        "UPDATE service_requests SET status = ? WHERE id = ?",
+                        (new_status, record_id),
+                    )
+            connection.commit()
+        return redirect(url_for("staff_section", section=section))
+    role_sections = {
+        "Staff_Kitchen": {"kitchen": ("Kitchen Orders", "Food delivery and kitchen requests.",
+                                      "SELECT id, request_type, details, status, date_created FROM service_requests ORDER BY id DESC",
+                                      ["ID", "Type", "Details", "Status", "Created"])},
+        "Staff_Logistics": {"logistics": ("Logistics", "Inbound deliveries and shipment tracking.",
+                                          "SELECT id, description, status, logistics_code, date_updated FROM deliveries ORDER BY id DESC",
+                                          ["ID", "Description", "Status", "Code", "Updated"])},
+        "Staff_Utilities": {"utilities": ("Utilities", "Room service requests and room conditions.",
+                                          "SELECT sr.id, r.room_number, sr.request_type, sr.status, sr.date_created "
+                                          "FROM service_requests sr JOIN rooms r ON r.id = sr.room_id "
+                                          "WHERE r.status <> 'Vacant' ORDER BY sr.id DESC",
+                                          ["ID", "Room", "Request", "Status", "Created"])},
+    }
+    config = role_sections.get(session["user"]["role"], {}).get(section)
+    if not config:
+        return redirect(url_for("dashboard"))
+    title, description, query, columns = config
+    with get_connection() as connection:
+        rows = connection.execute(query).fetchall()
+    form = {"submit": "Update task", "fields": [
+        ("record_id", "Record ID", "number"),
+        ("status", "New status", "text"),
+    ]}
+    if role == "Staff_Logistics":
+        form["fields"].append(("logistics_code", "Logistics code", "password"))
+    return render_data_page(
+        title, description, columns, rows,
+        [("Dashboard", "dashboard"), ("Bulletin", "bulletin"), ("Inbox", "inbox")],
+        form,
+    )
+
+
+@app.get("/health")
+def health():
+    return {"ok": True}
+
+
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5001))
-    host = os.environ.get("HOST", "0.0.0.0")
-    print(f"[The Quest Mobile App] Server online on http://{host}:{port}")
-    app.run(host=host, port=port, debug=False)
+    app.run(host="0.0.0.0", port=5000, debug=False)

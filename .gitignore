@@ -1,3 +1,32 @@
 database/
 TheQuest_Company_DesktopApp/.venv/
-TheQuest_Customer_Website/.venv/
+TheQuest_Customer_Website/.venv/# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Environment files
+.env
+.env.*
+
+# Android / Gradle
+.gradle/
+**/.gradle/
+**/build/
+**/.kotlin/
+
+# Android Studio
+.idea/
+local.properties
+*.iml
+
+# Python test and tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Operating system
+.DS_Store
+Thumbs.db

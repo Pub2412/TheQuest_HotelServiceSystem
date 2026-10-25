@@ -1,6 +1,1 @@
-# The Quest Hotel Management System - Mobile Portal Requirements
-Flask>=3.0.0
-Werkzeug>=3.0.0
-Jinja2>=3.1.2
-Pillow>=9.0.0
-fpdf>=1.7.2
+Flask>=2.3,<4

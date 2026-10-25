@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Quest Hotel - Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><img src="{{ url_for('assets', filename='imgs/logo/logo.png') }}" alt=""> <span><strong>The Quest Hotel</strong><small>{{ current_user.role }}</small></span></div>
+    <form method="post" action="{{ url_for('logout') }}"><button class="signout" type="submit">Sign out</button></form>
+  </header>
+  <main class="app-shell">
+    <nav class="nav">
+      <a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('room_map') }}">Room map</a><a href="{{ url_for('bulletin') }}">Bulletin</a><a href="{{ url_for('inbox') }}">Inbox</a>
+    {% if current_user.role == "Admin" %}
+      <a href="{{ url_for('admin_analytics') }}">Analytics</a><a href="{{ url_for('admin_inventory') }}">Inventory</a><a href="{{ url_for('admin_staff') }}">Staff</a><a href="{{ url_for('admin_guests') }}">Guests</a><a href="{{ url_for('admin_rewards') }}">Rewards</a>
+    {% elif current_user.role == "Cashier" %}
+      <a href="{{ url_for('cashier_reservations') }}">Reservations</a><a href="{{ url_for('cashier_guests') }}">Guests</a>
+    {% elif current_user.role == "Staff_Kitchen" %}
+      <a href="{{ url_for('staff_section', section='kitchen') }}">Kitchen</a>
+    {% elif current_user.role == "Staff_Logistics" %}
+      <a href="{{ url_for('staff_section', section='logistics') }}">Logistics</a>
+    {% elif current_user.role == "Staff_Utilities" %}
+      <a href="{{ url_for('staff_section', section='utilities') }}">Utilities</a>
+    {% endif %}
+    </nav>
+    <div class="content"><h1>Welcome, {{ current_user.name }}</h1>
+    <section class="metrics">
+      <div class="metric"><b>{{ metrics.rooms }}</b><span>Total rooms</span></div>
+      <div class="metric"><b>{{ metrics.occupied }}</b><span>Occupied</span></div>
+      <div class="metric"><b>{{ metrics.vacant }}</b><span>Vacant</span></div>
+      <div class="metric"><b>{{ metrics.pending }}</b><span>Pending</span></div>
+    </section>
+    <section class="card">
+      <h2>Room status</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Room</th><th>Type</th><th>Rate</th><th>Status</th></tr></thead>
+        <tbody>{% for room in rooms %}
+          <tr><td>{{ room.room_number }}</td><td>{{ room.type }}</td>
+            <td>₱{{ "%.0f"|format(room.price_per_night) }}</td>
+            <td><span class="status {{ room.status|lower|replace(' ', '-') }}">{{ room.status }}</span></td>
+          </tr>
+        {% else %}<tr><td colspan="4">No rooms found.</td></tr>{% endfor %}</tbody>
+      </table></div>
+    </section>
+    </div>
+  </main>
+</body>
+</html>
