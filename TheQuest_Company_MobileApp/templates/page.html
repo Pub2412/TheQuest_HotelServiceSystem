@@ -1,53 +1,268 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>The Quest Hotel - {{ title }}</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The Quest - {{ title }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}">
 </head>
 <body>
+  <!-- Top App Header: Solid Deep Royal Purple (#23073D) matching DesktopApp -->
   <header class="topbar">
-    <div class="brand"><img src="{{ url_for('assets', filename='imgs/logo/logo.png') }}" alt=""><span><strong>The Quest Hotel</strong><small>{{ current_user.role }}</small></span></div>
-    <form method="post" action="{{ url_for('logout') }}"><button class="signout" type="submit">Sign out</button></form>
+    <a href="{{ url_for('dashboard') }}" class="brand">
+      <img src="{{ url_for('assets', filename='imgs/logo/logo.png') }}" alt="The Quest Logo">
+      <div class="brand-info">
+        <span class="brand-title">The Quest • Mobile Console</span>
+        <span class="brand-slogan">"We shall never deny a guest, even the most ridiculous request"</span>
+      </div>
+    </a>
+    
+    <div class="topbar-right">
+      <div class="staff-info">
+        <span class="staff-name">{{ current_user.name }}</span>
+        <span class="staff-clearance">Clearance: {{ current_user.role|replace('_', ' ') }}</span>
+      </div>
+      <form method="post" action="{{ url_for('logout') }}" style="margin: 0;">
+        <button class="signout-btn" type="submit" title="Sign out of console">
+          <span>Sign Out</span>
+        </button>
+      </form>
+    </div>
   </header>
+
   <main class="app-shell">
-    <nav class="nav"><a href="{{ url_for('dashboard') }}">Dashboard</a><a href="{{ url_for('room_map') }}">Room map</a>{% for label, endpoint in actions %}<a href="{{ url_for(endpoint) }}">{{ label }}</a>{% endfor %}</nav>
+    <nav class="nav" aria-label="Console Navigation">
+      <a href="{{ url_for('dashboard') }}">
+        <span>📊</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="{{ url_for('room_map') }}" {% if request.path == url_for('room_map') %}class="active"{% endif %}>
+        <span>🗺️</span>
+        <span>Room map</span>
+      </a>
+      <a href="{{ url_for('doors_page') }}" {% if request.path == url_for('doors_page') %}class="active"{% endif %}>
+        <span>🔑</span>
+        <span>Room Keys</span>
+      </a>
+      {% for label, endpoint in actions %}
+      <a href="{{ url_for(endpoint) }}" {% if request.path == url_for(endpoint) %}class="active"{% endif %}>
+        <span>✨</span>
+        <span>{{ label }}</span>
+      </a>
+      {% endfor %}
+    </nav>
+
     <div class="content">
-    {% if form %}
-    <section class="card action-card">
-      <form method="post" action="{{ form.get('action_template', request.path).replace('{reservation_id}', request.form.get('reservation_id', '')) }}">
-        {% if form.action %}<input type="hidden" name="action" value="{{ form.action }}">{% endif %}
-        {% for field in form.fields %}
-          {% set name = field[0] %}{% set label = field[1] %}{% set input_type = field[2] %}
-          <label>{{ label }}{% if input_type == "textarea" %}<textarea name="{{ name }}" required></textarea>{% elif input_type == "select" %}<select name="{{ name }}" required><option value="">Choose recipient</option>{% for option in field[3] %}<option value="{{ option }}">{{ option }}</option>{% endfor %}</select>{% else %}<input name="{{ name }}" type="{{ input_type }}" required>{% endif %}</label>
-        {% endfor %}
-        <button type="submit">{{ form.submit }}</button>
-      </form>
-    </section>
-    {% endif %}
-    {% if call_targets %}
-    <section class="card call-card">
-      <h2>Employee voice call</h2>
-      <p class="muted">Call another employee and allow microphone access to simulate live audio.</p>
-      <form method="post" action="{{ url_for('calls') }}" id="call-form">
-        <label>Employee
-          <select name="receiver_id" required>
-            <option value="">Choose employee</option>
-            {% for employee in call_targets %}
-            <option value="{{ employee.id }}">{{ employee.name }} · {{ employee.role|replace("_", " ") }}</option>
+      <!-- Breadcrumb Navigation -->
+      <div class="page-breadcrumb">
+        <a href="{{ url_for('dashboard') }}" class="back-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>Back to Operations Console</span>
+        </a>
+      </div>
+
+      <!-- Formal Page Header Banner -->
+      <section class="page-header-card">
+        <div>
+          <h1>{{ title }}</h1>
+          <p>{{ description }}</p>
+        </div>
+        <div class="view-toggle-group">
+          <button type="button" class="view-toggle-btn active" id="btn-page-cards" onclick="togglePageView('cards')">
+            📱 Record Cards
+          </button>
+          <button type="button" class="view-toggle-btn" id="btn-page-table" onclick="togglePageView('table')">
+            📊 Data Table
+          </button>
+        </div>
+      </section>
+
+      <!-- Action Form Card (Restock, Create Staff, Post Bulletin, Send Message, etc.) -->
+      {% if form %}
+      <section class="card action-card">
+        <h2>
+          <span>✍️</span>
+          <span>{{ form.submit or "Operation Action" }}</span>
+        </h2>
+        <form method="post" action="{{ form.get('action_template', request.path).replace('{reservation_id}', request.form.get('reservation_id', '')) }}">
+          {% if form.action %}<input type="hidden" name="action" value="{{ form.action }}">{% endif %}
+          
+          {% for field in form.fields %}
+            {% set name = field[0] %}{% set label = field[1] %}{% set input_type = field[2] %}
+            <div class="form-group">
+              <label for="field-{{ name }}">{{ label }}</label>
+              {% if input_type == "textarea" %}
+                <textarea id="field-{{ name }}" name="{{ name }}" placeholder="Enter message or notes..." required></textarea>
+              {% elif input_type == "select" %}
+                <select id="field-{{ name }}" name="{{ name }}" required>
+                  <option value="">Select recipient clearance</option>
+                  {% for option in field[3] %}
+                  <option value="{{ option }}">{{ option|replace('_', ' ') }}</option>
+                  {% endfor %}
+                </select>
+              {% else %}
+                <input id="field-{{ name }}" name="{{ name }}" type="{{ input_type }}" placeholder="{{ label }}" required>
+              {% endif %}
+            </div>
+          {% endfor %}
+          
+          <button type="submit">
+            <span>{{ form.submit }}</span>
+          </button>
+        </form>
+      </section>
+      {% endif %}
+
+      <!-- Voice Softphone Intercom (Matching DesktopApp PhoneCallModal) -->
+      {% if call_targets %}
+      <section class="card call-card">
+        <h2>
+          <span>📞</span>
+          <span>Voice Dispatch Softphone</span>
+        </h2>
+        <p class="muted">Instant radio / voice dispatch connection to on-duty staff members.</p>
+        <form method="post" action="{{ url_for('calls') }}" id="call-form">
+          <div class="form-group">
+            <label for="receiver-select">Select Staff Member</label>
+            <select id="receiver-select" name="receiver_id" required>
+              <option value="">Choose employee to connect</option>
+              {% for employee in call_targets %}
+              <option value="{{ employee.id }}">👤 {{ employee.name }} · {{ employee.role|replace("_", " ") }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="call-btn">
+            <span>📞 Initiate Voice Dispatch</span>
+          </button>
+        </form>
+      </section>
+      {% endif %}
+
+      <!-- Architectural Blueprint Visualizer (Matching DesktopApp HotelMapWidget) -->
+      {% if title == "Hotel Room Map" %}
+      <section class="card" style="padding: 14px;">
+        <div class="section-toolbar" style="margin-bottom: 8px;">
+          <h2>
+            <span>🏨</span>
+            <span>Architectural Blueprint & Floorplan</span>
+          </h2>
+          <button type="button" class="btn-secondary" style="width: auto; padding: 4px 10px; font-size: 0.78rem; margin: 0;" onclick="toggleMapPreview()">
+            <span id="map-toggle-text">Hide Blueprint</span>
+          </button>
+        </div>
+        <div id="hotel-map-box" class="hotel-map-container">
+          <img class="hotel-map-img" src="{{ url_for('assets', filename='imgs/HotelMap.jpg') }}" alt="The Quest Hotel Architectural Blueprint">
+          <div class="map-caption">
+            <span>The Quest Hotel - Master Architectural Floorplan</span>
+            <small style="color: var(--color-accent-light);">Reference Map</small>
+          </div>
+        </div>
+      </section>
+      <script>
+        function toggleMapPreview() {
+          const map = document.getElementById('hotel-map-box');
+          const txt = document.getElementById('map-toggle-text');
+          if (map.style.display === 'none') {
+            map.style.display = 'block';
+            txt.textContent = 'Hide Blueprint';
+          } else {
+            map.style.display = 'none';
+            txt.textContent = 'Show Blueprint';
+          }
+        }
+      </script>
+      {% endif %}
+
+      <!-- Main Data Records Section -->
+      <section class="card">
+        <!-- Mobile Record Cards View -->
+        <div id="page-cards-container" class="mobile-records-list">
+          {% for row in rows %}
+          <div class="mobile-record-card">
+            {% for column in columns %}
+              {% set val = row[loop.index0] %}
+              <div class="record-row">
+                <span class="record-label">{{ column }}</span>
+                <span class="record-value">
+                  {% if column|lower == "status" and val is not none %}
+                    <span class="status {{ val|lower|replace(' ', '-') }}">{{ val }}</span>
+                  {% elif column|lower in ["rate", "amount", "total", "cost"] and val is not none %}
+                    <strong style="color: var(--color-primary);">₱{{ val if val is string else "{:,.2f}".format(val) }}</strong>
+                  {% else %}
+                    {{ val if val is not none else "N/A" }}
+                  {% endif %}
+                </span>
+              </div>
             {% endfor %}
-          </select>
-        </label>
-        <button type="submit">📞 Start voice call</button>
-      </form>
-    </section>
-    {% endif %}
-    <section class="card"><h1>{{ title }}</h1><p class="muted">{{ description }}</p>
-      <div class="table-wrap"><table><thead><tr>{% for column in columns %}<th>{{ column }}</th>{% endfor %}</tr></thead>
-      <tbody>{% for row in rows %}<tr>{% for value in row %}<td>{{ value if value is not none else "N/A" }}</td>{% endfor %}</tr>{% else %}<tr><td colspan="{{ columns|length }}">No records found.</td></tr>{% endfor %}</tbody></table></div>
-    </section>
+          </div>
+          {% else %}
+          <p class="muted" style="text-align: center; padding: 20px;">No records found.</p>
+          {% endfor %}
+        </div>
+
+        <!-- Full Corporate Data Table View -->
+        <div id="page-table-container" class="table-wrap" style="display: none;">
+          <table>
+            <thead>
+              <tr>
+                {% for column in columns %}
+                <th>{{ column }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+              <tr>
+                {% for value in row %}
+                <td>
+                  {% set col_idx = loop.index0 %}
+                  {% set col_name = columns[col_idx]|lower %}
+                  {% if col_name == "status" and value is not none %}
+                    <span class="status {{ value|lower|replace(' ', '-') }}">{{ value }}</span>
+                  {% elif col_name in ["rate", "amount", "total", "cost"] and value is not none %}
+                    <span style="font-weight: 700; color: var(--color-primary);">₱{{ value if value is string else "{:,.2f}".format(value) }}</span>
+                  {% else %}
+                    {{ value if value is not none else "N/A" }}
+                  {% endif %}
+                </td>
+                {% endfor %}
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="{{ columns|length }}" style="text-align: center;">No records found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   </main>
+
+  <script>
+    function togglePageView(view) {
+      const cards = document.getElementById('page-cards-container');
+      const table = document.getElementById('page-table-container');
+      const btnCards = document.getElementById('btn-page-cards');
+      const btnTable = document.getElementById('btn-page-table');
+
+      if (view === 'cards') {
+        cards.style.display = 'flex';
+        table.style.display = 'none';
+        btnCards.classList.add('active');
+        btnTable.classList.remove('active');
+      } else {
+        cards.style.display = 'none';
+        table.style.display = 'block';
+        btnCards.classList.remove('active');
+        btnTable.classList.add('active');
+      }
+    }
+  </script>
+
   {% include "_table_search.html" %}
   {% include "_incoming_call.html" %}
 </body>

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}About The Quest Hotel & Suites{% endblock %}
+
+{% block content %}
+<section>
+  <h1 class="section-title">
+    <span>ℹ️</span> About The Quest Hotel
+  </h1>
+
+  <div class="card" style="padding: 18px;">
+    <div style="text-align: center; margin-bottom: 14px;">
+      <img src="{{ url_for('assets', filename='imgs/logo/logo.png') }}" alt="Logo" style="width: 70px; height: 70px; border-radius: 14px; border: 2px solid var(--color-accent);">
+      <h2 style="margin: 8px 0 2px; color: var(--color-primary-dark); font-size: 1.3rem;">The Quest Luxury Suites</h2>
+      <p style="font-size: 0.85rem; color: var(--color-accent-text); font-style: italic; font-weight: 600;">
+        "We shall never deny a guest, even the most ridiculous request"
+      </p>
+    </div>
+
+    <p style="font-size: 0.88rem; line-height: 1.5; color: var(--color-text-normal); margin-bottom: 12px;">
+      Nestled in supreme elegance, <b>The Quest Hotel</b> represents the pinnacle of hospitality.
+      Combining royal British aristocratic heritage with cutting-edge contactless digital mobile conveniences,
+      we cater to our guests' deepest comfort and most imaginative whims.
+    </p>
+
+    <div style="background: var(--color-bg); border-radius: var(--radius-md); padding: 12px; margin-bottom: 14px; font-size: 0.85rem;">
+      <h4 style="margin: 0 0 6px; color: var(--color-primary);">Hotel Policies & Privileges</h4>
+      <ul style="margin: 0; padding-left: 18px; color: var(--color-text-normal);">
+        <li><b>Check-In Time:</b> 2:00 PM</li>
+        <li><b>Check-Out Time:</b> 12:00 PM (Noon)</li>
+        <li><b>Digital Smart Keys:</b> Contactless Wi-Fi proximity & NFC tap</li>
+        <li><b>In-Room Dining:</b> 24/7 White-Glove Butler Delivery</li>
+        <li><b>Loyalty Rewards:</b> Earn 1 point per ₱100 spent</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Hotel Map Section -->
+  <div id="map" class="card">
+    <h3 style="margin: 0 0 8px; font-size: 1.1rem; color: var(--color-primary-dark); display: flex; align-items: center; gap: 8px;">
+      <span>🗺️</span> Hotel Architectural Map
+    </h3>
+    <p style="font-size: 0.82rem; color: var(--color-text-muted); margin: 0 0 10px;">
+      Explore our 5 levels of luxury suites, courtyards, spa pavilions, and presidential skylounges.
+    </p>
+    <div style="border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--color-border);">
+      <img src="{{ url_for('assets', filename='imgs/HotelMap.jpg') }}" alt="Hotel Architectural Map" style="width: 100%; height: auto; display: block;">
+    </div>
+  </div>
+</section>
+{% endblock %}
+

@@ -1,18 +1,1294 @@
-:root{--purple:#3b185f;--deep:#23073d;--gold:#f59e0b;--bg:#f6f3fa;--text:#241b2f;--muted:#766d80}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px Arial,sans-serif}
-.login-page{min-height:100vh;display:grid;place-items:center;padding:20px}.card{background:white;border-radius:18px;box-shadow:0 8px 24px #23073d18;padding:22px}
-.login-card{width:min(100%,390px);text-align:center}.logo{width:82px;height:82px;object-fit:contain;border-radius:16px}.brand img{width:38px;height:38px;object-fit:contain;background:white;border-radius:8px;margin-right:8px}.brand{display:flex;align-items:center}.brand span{display:block}
-h1{font-size:25px;margin:16px 0 5px}h2{font-size:18px;margin:0 0 16px}.muted,small{color:var(--muted)}
-form{text-align:left;margin-top:24px}label{display:block;font-weight:bold;margin:14px 0}input{display:block;width:100%;padding:13px;margin-top:7px;border:1px solid #ddd4e7;border-radius:10px;font-size:16px}
-button{width:100%;border:0;border-radius:10px;background:var(--purple);color:white;padding:14px;font-weight:bold;font-size:16px;margin-top:10px}.alert{background:#fee2e2;color:#991b1b;padding:10px;border-radius:9px;margin-top:18px}
-.topbar{background:var(--purple);color:white;padding:14px 20px 18px;display:flex;flex-direction:column;align-items:stretch;gap:12px}.topbar small{display:block;color:#eadbff;margin-top:4px}.topbar form{margin:0}.signout{width:100%;min-height:48px;margin:0;padding:12px;background:var(--gold);color:var(--deep);font-size:15px;cursor:pointer}
-.app-shell{display:flex;align-items:flex-start;max-width:1200px;margin:auto}.content{flex:1;max-width:900px;margin:auto;padding:20px}.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:18px 0}.metric{background:white;border-radius:14px;padding:16px}.metric b{display:block;color:var(--purple);font-size:28px}.metric span{color:var(--muted);font-size:13px}
-.nav{display:flex;flex-direction:column;gap:8px;width:190px;padding:20px 10px;position:sticky;top:0}.nav a{background:white;color:var(--purple);padding:12px 13px;border-radius:10px;white-space:nowrap;text-decoration:none;font-weight:bold;box-shadow:0 2px 8px #23073d12}
-.action-card{margin-bottom:18px}.action-card form{margin:0}textarea{display:block;width:100%;min-height:90px;padding:13px;margin-top:7px;border:1px solid #ddd4e7;border-radius:10px;font:16px Arial}
-select{display:block;width:100%;padding:13px;margin-top:7px;border:1px solid #ddd4e7;border-radius:10px;background:white;font-size:16px}
-.table-search{display:block;width:100%;padding:13px;margin:0 0 10px;border:1px solid #ddd4e7;border-radius:10px;font-size:16px;background:white}
-.call-card{border:2px solid var(--gold)}.incoming-call{position:fixed;right:18px;bottom:18px;max-width:320px;background:white;border:2px solid var(--gold);border-radius:14px;box-shadow:0 8px 30px #23073d35;padding:16px;z-index:10}.incoming-call span{display:block;color:var(--muted);margin:8px 0}.incoming-call button{width:auto;margin-right:8px;padding:10px 14px}.incoming-call button:last-child{background:#991b1b}
-.active-call{position:fixed;inset:0;background:linear-gradient(160deg,var(--deep),var(--purple));color:white;z-index:20;text-align:center;padding:55px 24px}.active-call-brand{color:var(--gold);font-size:12px;font-weight:bold;letter-spacing:1px}.active-call-avatar{display:grid;place-items:center;width:110px;height:110px;margin:55px auto 22px;border-radius:55px;background:var(--gold);color:var(--deep);font-size:48px}.active-call h2{font-size:26px;margin:12px 0 6px}.active-call p{color:#eadbff;margin:0 0 18px}.active-call strong{color:#86efac}.active-call-timer{font-size:34px;font-weight:bold;margin:16px}.active-call-controls{display:flex;justify-content:center;gap:12px;margin-top:55px}.active-call-controls button{width:auto;min-width:120px;margin:0;background:#4a2374}.active-call-controls button:last-child{background:#dc2626}
-.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:500px}th,td{text-align:left;padding:12px 8px;border-bottom:1px solid #eee}th{color:var(--muted);font-size:12px;text-transform:uppercase}.status{font-size:12px;border-radius:99px;padding:5px 8px;background:#eee}.occupied{background:#fee2e2;color:#991b1b}.vacant{background:#dcfce7;color:#166534}
-@media(min-width:600px){.metrics{grid-template-columns:repeat(4,1fr)}}
-@media(max-width:599px){.app-shell{display:block}.nav{width:auto;position:static;flex-direction:row;overflow:auto;padding:12px 20px 0}.content{padding-top:12px}}
+/* ==========================================================================
+   THE QUEST HOTEL - MOBILE OPERATIONS CONSOLE
+   Formal Enterprise Theme (Matching TheQuest_Company_DesktopApp)
+   Palette: Royal Velvet Purple (#3B185F, #23073D), Warm Gold (#F59E0B), Soft Off-White (#F8FAFC)
+   Slogan: "We shall never deny a guest, even the most ridiculous request"
+   ========================================================================== */
+
+:root {
+  /* Core Color Palette: Purple, Yellow, White */
+  --color-primary-dark: #23073D;
+  --color-primary: #3B185F;
+  --color-primary-light: #581C87;
+  --color-primary-tint: #EDE9FE;
+
+  --color-accent: #F59E0B;
+  --color-accent-hover: #D97706;
+  --color-accent-light: #FEF3C7;
+  --color-accent-text: #78350F;
+
+  --color-white: #FFFFFF;
+  --color-bg: #F8FAFC;
+  --color-card: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-border-input: #CBD5E1;
+  --color-border-focus: #8B5CF6;
+
+  /* Semantic Typography Colors */
+  --color-text-dark: #0F172A;
+  --color-text-normal: #1E293B;
+  --color-text-muted: #64748B;
+  --color-text-light: #94A3B8;
+  --color-text-white: #FFFFFF;
+
+  /* Status Colors */
+  --color-success: #10B981;
+  --color-success-bg: #ECFDF5;
+  --color-success-text: #065F46;
+
+  --color-danger: #EF4444;
+  --color-danger-bg: #FEF2F2;
+  --color-danger-text: #991B1B;
+
+  --color-warning: #F59E0B;
+  --color-warning-bg: #FFFBEB;
+  --color-warning-text: #92400E;
+
+  --color-info: #3B82F6;
+  --color-info-bg: #EFF6FF;
+  --color-info-text: #1E40AF;
+
+  /* Typography */
+  --font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Elevation & Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.08);
+  --shadow-dropdown: 0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -2px rgba(15, 23, 42, 0.1);
+  --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.25);
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+}
+
+/* Base Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  font-size: 15px;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--color-bg);
+  color: var(--color-text-normal);
+  font-family: var(--font-family);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+/* Headings */
+h1, h2, h3, h4 {
+  color: var(--color-text-dark);
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+h1 {
+  font-size: 1.35rem;
+  letter-spacing: -0.2px;
+}
+
+h2 {
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+p {
+  margin: 0 0 8px;
+}
+
+.muted, small {
+  color: var(--color-text-muted);
+}
+
+/* ==========================================================================
+   Header: Solid Deep Royal Purple (#23073D) matching DesktopApp header
+   ========================================================================== */
+
+.topbar {
+  background: var(--color-primary-dark);
+  color: var(--color-text-white);
+  padding: 10px 16px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 2px solid var(--color-accent);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--color-text-white);
+}
+
+.brand img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  background: var(--color-white);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  border: 1px solid var(--color-accent);
+}
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--color-white);
+  line-height: 1.2;
+}
+
+.brand-slogan {
+  font-size: 0.68rem;
+  font-style: italic;
+  color: var(--color-accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 210px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.staff-info {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.staff-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-white);
+  line-height: 1.2;
+}
+
+.staff-clearance {
+  font-size: 0.72rem;
+  color: var(--color-primary-tint);
+}
+
+.signout-btn {
+  background: var(--color-primary-light);
+  color: var(--color-text-white);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  width: auto;
+  min-height: auto;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.signout-btn:hover {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: var(--color-white);
+}
+
+/* ==========================================================================
+   Navigation Bar: Formal Segmented Tabs Bar
+   ========================================================================== */
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.nav {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  gap: 4px;
+  padding: 8px 16px;
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 58px;
+  z-index: 40;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.nav::-webkit-scrollbar {
+  display: none;
+}
+
+.nav a {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid transparent;
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.nav a:hover {
+  background: var(--color-primary-tint);
+  color: var(--color-primary);
+}
+
+.nav a.active,
+.nav a[aria-current="page"] {
+  background: var(--color-primary);
+  color: var(--color-white);
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   Main Content Layout & Cards
+   ========================================================================== */
+
+.content {
+  flex: 1;
+  padding: 16px;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.card {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+/* Formal Breadcrumb */
+.page-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 4px 10px;
+  background: var(--color-primary-tint);
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
+}
+
+.back-link:hover {
+  background: #ddd6fe;
+}
+
+/* Formal Header Banner inside Page */
+.page-header-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.page-header-card h1 {
+  font-size: 1.25rem;
+  color: var(--color-primary-dark);
+}
+
+.page-header-card p {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  margin: 2px 0 0;
+}
+
+/* ==========================================================================
+   Formal Login Page (Matching DesktopApp LoginPage.py)
+   ========================================================================== */
+
+.login-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 16px;
+  background-color: var(--color-bg);
+}
+
+.login-card {
+  width: min(100%, 420px);
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Formal Top Header Panel */
+.login-header-banner {
+  background: var(--color-primary);
+  color: var(--color-text-white);
+  padding: 30px 24px 24px;
+  text-align: center;
+  border-bottom: 3px solid var(--color-accent);
+}
+
+.login-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  margin-bottom: 12px;
+}
+
+.login-header-banner h1 {
+  color: var(--color-white);
+  font-size: 1.45rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.login-header-subtitle {
+  font-size: 0.82rem;
+  color: var(--color-primary-tint);
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.login-slogan-divider {
+  width: 80px;
+  height: 2px;
+  background: var(--color-accent);
+  margin: 10px auto;
+}
+
+.login-slogan-text {
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--color-accent-light);
+  line-height: 1.4;
+}
+
+.login-body {
+  padding: 24px 22px;
+}
+
+/* Quick Role Select Buttons */
+.login-quick-roles {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border);
+}
+
+.login-quick-roles-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.role-pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.role-pill-btn {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-normal);
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.role-pill-btn:hover {
+  background: var(--color-primary-tint);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* ==========================================================================
+   Form Controls: Clean Corporate Inputs
+   ========================================================================== */
+
+form {
+  text-align: left;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-text-normal);
+  margin-bottom: 6px;
+}
+
+.input-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon-wrap svg {
+  position: absolute;
+  left: 12px;
+  color: var(--color-text-muted);
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+
+input, textarea, select {
+  width: 100%;
+  background: var(--color-white);
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-dark);
+  font-family: var(--font-family);
+  font-size: 0.92rem;
+  padding: 10px 14px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input-icon-wrap input {
+  padding-left: 38px;
+  padding-right: 38px;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59, 24, 95, 0.12);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--color-text-light);
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  margin: 0;
+  width: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle-btn:hover {
+  color: var(--color-primary);
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%233B185F' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* Formal Corporate Buttons */
+button, .btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--color-primary);
+  color: var(--color-white);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  font-family: var(--font-family);
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.15s ease, transform 0.1s ease;
+  margin-top: 8px;
+  text-decoration: none;
+}
+
+button:hover, .btn:hover {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+
+button:active, .btn:active {
+  transform: translateY(1px);
+}
+
+.btn-secondary {
+  background: var(--color-white);
+  color: var(--color-primary);
+  border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+  background: var(--color-bg);
+  border-color: var(--color-primary);
+}
+
+/* Alerts */
+.alert {
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger-text);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   KPI Metric Cards (Matching DesktopApp MetricCard)
+   ========================================================================== */
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metric {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.metric-header span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  letter-spacing: 0.5px;
+}
+
+.metric-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.metric b {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.1;
+  margin-bottom: 2px;
+}
+
+.metric small {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* ==========================================================================
+   Table: Clean Corporate Data Grid
+   ========================================================================== */
+
+.section-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.view-toggle-group {
+  display: inline-flex;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+}
+
+.view-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  width: auto;
+  margin: 0;
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.view-toggle-btn.active {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 440px;
+  font-size: 0.88rem;
+}
+
+th {
+  background: #F1F5F9;
+  color: var(--color-text-dark);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-normal);
+  vertical-align: middle;
+}
+
+tbody tr:hover {
+  background: #F8FAFC;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Formal Mobile Record Cards */
+.mobile-records-list,
+.room-cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-record-card,
+.room-card-item {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.room-card-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.room-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.room-badge {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: var(--color-primary-tint);
+  border: 1px solid rgba(59, 24, 95, 0.15);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.room-item-details strong {
+  display: block;
+  font-size: 0.92rem;
+  color: var(--color-text-dark);
+}
+
+.room-rate {
+  font-size: 0.8rem;
+  color: var(--color-accent-text);
+  font-weight: 700;
+}
+
+.record-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.record-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.record-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-text-muted);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.record-value {
+  font-size: 0.86rem;
+  color: var(--color-text-dark);
+  text-align: right;
+  word-break: break-word;
+}
+
+/* ==========================================================================
+   Status Badges (Matching STATUS_COLORS in DesktopApp theme.py)
+   ========================================================================== */
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+}
+
+/* Vacant / Complete / Completed */
+.status.vacant,
+.status[data-status="vacant"],
+.status[data-status="completed"],
+.status[data-status="complete"] {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+  border: 1px solid var(--color-success);
+}
+.status.vacant::before,
+.status[data-status="vacant"]::before,
+.status[data-status="completed"]::before {
+  background: var(--color-success);
+}
+
+/* Occupied / Canceled */
+.status.occupied,
+.status[data-status="occupied"],
+.status[data-status="canceled"] {
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  border: 1px solid var(--color-danger);
+}
+.status.occupied::before,
+.status[data-status="occupied"]::before,
+.status[data-status="canceled"]::before {
+  background: var(--color-danger);
+}
+
+/* Pending / Needs Service / Processing / Near Receive */
+.status.pending,
+.status[data-status="pending"],
+.status[data-status="needs-service"],
+.status[data-status="processing"],
+.status[data-status="near-receive"] {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  border: 1px solid var(--color-warning);
+}
+.status.pending::before,
+.status[data-status="pending"]::before,
+.status[data-status="processing"]::before {
+  background: var(--color-warning);
+}
+
+/* Reserved / Checked In / Checked Out / On the Way */
+.status.reserved,
+.status.checked-in,
+.status.checked-out,
+.status[data-status="reserved"],
+.status[data-status="checked-in"],
+.status[data-status="checked-out"],
+.status[data-status="on-the-way"] {
+  background: var(--color-info-bg);
+  color: var(--color-info-text);
+  border: 1px solid var(--color-info);
+}
+.status.reserved::before,
+.status[data-status="reserved"]::before,
+.status[data-status="on-the-way"]::before {
+  background: var(--color-info);
+}
+
+/* ==========================================================================
+   Table Search Bar
+   ========================================================================== */
+
+.search-container {
+  margin-bottom: 12px;
+}
+
+.search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input-wrap svg {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.table-search {
+  width: 100%;
+  background: var(--color-white);
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-dark);
+  padding: 8px 36px 8px 36px;
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+.table-search:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59, 24, 95, 0.12);
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  margin: 0;
+  width: auto;
+  box-shadow: none;
+  font-size: 1rem;
+}
+
+.search-count-badge {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+  padding-left: 4px;
+}
+
+/* ==========================================================================
+   Phone Intercom (Softphone matching DesktopApp PhoneCallModal)
+   ========================================================================== */
+
+.call-card {
+  border-left: 4px solid var(--color-accent);
+}
+
+.call-btn {
+  background: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+}
+
+.call-btn:hover {
+  background: var(--color-primary-dark);
+}
+
+/* Softphone Intercom Overlay & HUD */
+.incoming-call {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  left: 14px;
+  right: 14px;
+  margin: 0 auto;
+  max-width: 440px;
+  background: var(--color-primary-dark);
+  color: var(--color-white);
+  border-left: 5px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.4);
+  padding: 14px 16px;
+  z-index: 999999;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  animation: slideDown 0.3s ease-out;
+}
+
+.incoming-call.show-call {
+  display: flex !important;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.incoming-call-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.incoming-call-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  animation: pulseRingtone 1s infinite alternate;
+}
+
+@keyframes pulseRingtone {
+  from { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+  to { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+}
+
+.incoming-call-text strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--color-white);
+}
+
+.incoming-call-text span {
+  font-size: 0.75rem;
+  color: var(--color-accent-light);
+}
+
+.incoming-call-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.call-action-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.call-action-btn.accept {
+  background: var(--color-success);
+  color: #ffffff;
+}
+
+.call-action-btn.decline {
+  background: var(--color-danger);
+  color: #ffffff;
+}
+
+/* Fullscreen Softphone Active Call */
+.active-call {
+  position: fixed;
+  inset: 0;
+  background: var(--color-primary-dark);
+  color: var(--color-white);
+  z-index: 1000000;
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: max(30px, env(safe-area-inset-top)) 20px max(30px, env(safe-area-inset-bottom));
+  text-align: center;
+}
+
+.active-call.show-call {
+  display: flex !important;
+}
+
+.active-call-brand {
+  color: var(--color-accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.active-call-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  margin: 0 auto 16px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+.active-call h2 {
+  font-size: 1.5rem;
+  margin: 0 0 4px;
+  color: var(--color-white);
+}
+
+.active-call p {
+  color: var(--color-primary-tint);
+  font-size: 0.9rem;
+  margin: 0 0 10px;
+}
+
+.active-call strong {
+  display: inline-block;
+  color: #86EFAC;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+.active-call-timer {
+  font-family: monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-white);
+  margin-top: 10px;
+}
+
+.active-call-controls {
+  display: flex;
+  gap: 14px;
+  width: 100%;
+  max-width: 300px;
+  justify-content: center;
+}
+
+.active-call-controls button {
+  width: auto;
+  flex: 1;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+
+.active-call-controls .mute-btn {
+  background: var(--color-primary-light);
+  color: var(--color-white);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.active-call-controls .mute-btn.active {
+  background: var(--color-accent);
+  color: var(--color-primary-dark);
+}
+
+.active-call-controls .end-btn {
+  background: var(--color-danger);
+  color: #ffffff;
+  border: none;
+}
+
+/* ==========================================================================
+   Architectural Floorplan Container
+   ========================================================================== */
+
+.hotel-map-container {
+  margin-top: 12px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: #000;
+}
+
+.hotel-map-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.map-caption {
+  padding: 8px 12px;
+  background: var(--color-primary-dark);
+  color: var(--color-white);
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ==========================================================================
+   Responsive Desktop Viewports
+   ========================================================================== */
+
+@media (min-width: 768px) {
+  .app-shell {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .nav {
+    flex-direction: column;
+    width: 220px;
+    position: sticky;
+    top: 60px;
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+    border-bottom: none;
+    border-right: 1px solid var(--color-border);
+    padding: 16px 10px;
+  }
+
+  .nav a {
+    width: 100%;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  .metrics {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .room-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

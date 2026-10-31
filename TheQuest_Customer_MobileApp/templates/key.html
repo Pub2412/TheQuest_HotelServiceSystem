@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Digital Room Key - The Quest Hotel{% endblock %}
+
+{% block content %}
+<section>
+  <h1 class="section-title">
+    <span>🔑</span> Digital Keycard & Door Access
+  </h1>
+
+  {% if is_checked_in and stay %}
+    <!-- Luxury Digital Room Key Graphic -->
+    <div class="keycard-container">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div class="keycard-chip"></div>
+        <div style="text-align: right;">
+          <span style="background: rgba(245, 158, 11, 0.25); color: #FCD34D; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-full); border: 1px solid #F59E0B;">
+            ACTIVE KEYCARD
+          </span>
+          <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.7); margin-top: 4px;">The Quest Luxury Suites</div>
+        </div>
+      </div>
+
+      <div class="keycard-room">Suite {{ stay.room_number }}</div>
+      <div class="keycard-type">{{ stay.room_type }} • Level {{ stay.room_number[0] }}</div>
+
+      <div style="margin-top: 14px;">
+        <span style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.7); display: block;">Authorized Regular Key Token:</span>
+        <span class="keycard-token">🔑 {{ stay.active_key or "MINTED-KEY-ACTIVE" }}</span>
+        <span class="keycard-hash">DB SHA-256 Hash: {{ stay.active_key_hash or "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" }}</span>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 12px; font-size: 0.8rem; color: rgba(255, 255, 255, 0.85);">
+        <div>Guest: <b>{{ current_user.name }}</b></div>
+        <div>Check-Out: <b>{{ stay.check_out_date }}</b></div>
+      </div>
+    </div>
+
+    <!-- Live Door Lock Graphic -->
+    <div id="doorStatusCard" class="door-lock-display {{ stay.door_state }}">
+      <span id="lockIcon" class="lock-big-icon">
+        {{ "🔓" if stay.door_state == "unlocked" else "🔒" }}
+      </span>
+      <div id="lockStatusText" style="font-size: 1.15rem; font-weight: 800; letter-spacing: 0.5px;">
+        {{ "DOOR UNLOCKED" if stay.door_state == "unlocked" else "DOOR LOCKED" }}
+      </div>
+      <small style="display: block; opacity: 0.8; margin-top: 2px;">
+        {{ "Automatic safety relock will trigger in 5 seconds." if stay.door_state == "unlocked" else "Use Wi-Fi proximity or NFC tap below to unlock." }}
+      </small>
+    </div>
+
+    <!-- Method 1: Wi-Fi Proximity Door Unlock -->
+    <div class="card">
+      <h3 style="margin: 0 0 8px; font-size: 1.05rem; color: var(--color-primary-dark); display: flex; align-items: center; gap: 8px;">
+        <span>📶</span> 1. Unlock via Wi-Fi Proximity
+      </h3>
+      <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 12px;">
+        To open your room door via Wi-Fi, your smartphone must be connected to your suite's designated network:
+        <b style="color: var(--color-primary);">{{ stay.wifi_ssid }}</b>.
+      </p>
+
+      <div class="form-group">
+        <label class="form-label" style="font-size: 0.8rem;">Current Connected Wi-Fi Network:</label>
+        <select id="wifiSelect" class="select" style="font-weight: 600;">
+          <option value="{{ stay.wifi_ssid }}" selected>📶 {{ stay.wifi_ssid }} (Suite Wi-Fi - Connected)</option>
+          <option value="Quest_Lobby_Guest_WiFi">☕ Quest_Lobby_Guest_WiFi (Hotel Lobby - Unmatched)</option>
+          <option value="Quest_Staff_Secure">🔒 Quest_Staff_Secure (Staff Network)</option>
+          <option value="Cellular_5G">📵 Cellular Data 5G (No Wi-Fi)</option>
+        </select>
+      </div>
+
+      <button id="btnWifiUnlock" class="btn btn-primary btn-block" onclick="unlockDoor('wifi', '{{ stay.active_key }}')">
+        <span>📶</span> Unlock Door via Wi-Fi
+      </button>
+    </div>
+
+    <!-- Method 2: NFC Tap to Unlock -->
+    <div class="card">
+      <h3 style="margin: 0 0 8px; font-size: 1.05rem; color: var(--color-primary-dark); display: flex; align-items: center; gap: 8px;">
+        <span>📡</span> 2. Unlock via NFC Tap
+      </h3>
+      <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 12px;">
+        Tap your phone against the smart door lock reader. Physical proximity verified via NFC beam.
+      </p>
+
+      <div class="nfc-tap-button" onclick="handleNfcTap('{{ stay.active_key }}')">
+        <div class="nfc-pulse-waves">📡</div>
+        <div style="font-size: 1.15rem; font-weight: 800; margin-top: 4px;">Tap Phone to Door Lock</div>
+        <small style="opacity: 0.85; display: block; margin-top: 2px;">Click or tap to beam NFC digital keycard</small>
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" style="flex: 1;" onclick="lockCurrentDoor()">
+          🔒 Lock Door Now
+        </button>
+        <button class="btn btn-secondary" style="flex: 1;" onclick="checkDoorStatus()">
+          🔄 Check Lock Status
+        </button>
+      </div>
+    </div>
+
+    <!-- Recent Access Log for this Suite -->
+    <div class="card">
+      <h3 style="margin: 0 0 10px; font-size: 1rem; color: var(--color-primary-dark);">
+        <span>📋</span> Room {{ stay.room_number }} Access Activity
+      </h3>
+      {% if room_logs %}
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          {% for log in room_logs %}
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--color-border); font-size: 0.8rem;">
+              <div>
+                <b>{{ log.method|upper }}</b> • {{ log.user_name }}
+                <div style="font-size: 0.72rem; color: var(--color-text-muted);">{{ log.timestamp }}</div>
+              </div>
+              <span class="status {{ 'vacant' if log.status == 'granted' else 'occupied' }}" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 700; background: {{ '#DCFCE7' if log.status == 'granted' else '#FEE2E2' }}; color: {{ '#166534' if log.status == 'granted' else '#991B1B' }};">
+                {{ log.status|upper }}
+              </span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0;">No door access attempts recorded yet for this stay.</p>
+      {% endif %}
+    </div>
+
+  {% else %}
+    <!-- Not Checked In State -->
+    <div class="card" style="text-align: center; padding: 30px 20px;">
+      <span style="font-size: 3.5rem; display: block; margin-bottom: 10px;">🏷️</span>
+      <h2 style="margin: 0 0 8px; color: var(--color-primary-dark); font-size: 1.25rem;">No Active Room Key</h2>
+      <p style="font-size: 0.9rem; color: var(--color-text-muted); margin: 0 0 18px;">
+        Digital room keys with Wi-Fi & NFC unlock are minted automatically when you check in to your suite at the Front Desk.
+      </p>
+      <a href="{{ url_for('rooms_view') }}" class="btn btn-primary">
+        Browse & Reserve a Luxury Suite
+      </a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  async function lockCurrentDoor() {
+    try {
+      const res = await fetch("/api/door/lock", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, true);
+        const statusCard = document.getElementById("doorStatusCard");
+        const lockIcon = document.getElementById("lockIcon");
+        const lockText = document.getElementById("lockStatusText");
+        if (statusCard) statusCard.className = "door-lock-display locked";
+        if (lockIcon) lockIcon.innerText = "🔒";
+        if (lockText) lockText.innerText = "DOOR LOCKED";
+      }
+    } catch (e) {
+      showToast("Lock command failed: " + e, false);
+    }
+  }
+
+  async function checkDoorStatus() {
+    try {
+      const res = await fetch("/api/door/my-key");
+      const data = await res.json();
+      if (data.success) {
+        const statusCard = document.getElementById("doorStatusCard");
+        const lockIcon = document.getElementById("lockIcon");
+        const lockText = document.getElementById("lockStatusText");
+        if (statusCard) statusCard.className = "door-lock-display " + data.door_state;
+        if (lockIcon) lockIcon.innerText = data.door_state === "unlocked" ? "🔓" : "🔒";
+        if (lockText) lockText.innerText = data.door_state === "unlocked" ? "DOOR UNLOCKED" : "DOOR LOCKED";
+        showToast("Door status: " + data.door_state.toUpperCase(), true);
+      }
+    } catch (e) {
+      showToast("Status check failed: " + e, false);
+    }
+  }
+</script>
+{% endblock %}
+

@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The Quest - Staff Room Key & Door Access</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}">
+  <style>
+    .key-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      font-family: monospace;
+      font-size: 1.05rem;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      letter-spacing: 0.5px;
+    }
+    .key-badge-gold {
+      background: #FEF3C7;
+      color: #92400E;
+      border: 1px solid #F59E0B;
+    }
+    .key-badge-hash {
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      word-break: break-all;
+      background: #F1F5F9;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: block;
+      margin-top: 4px;
+    }
+    .door-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .room-door-card {
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .room-door-card.unlocked {
+      border-color: var(--color-success);
+      background: #F0FDF4;
+    }
+    .room-door-card.locked {
+      border-left: 4px solid var(--color-danger);
+    }
+    .door-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      width: fit-content;
+    }
+    .door-status-pill.locked {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+    .door-status-pill.unlocked {
+      background: #DCFCE7;
+      color: #166534;
+    }
+    .nfc-tap-zone {
+      background: linear-gradient(135deg, #23073D, #3B185F);
+      color: #FFFFFF;
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      text-align: center;
+      margin-top: 14px;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+      overflow: hidden;
+      border: 2px dashed #F59E0B;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .nfc-tap-zone:active {
+      transform: scale(0.98);
+    }
+    .nfc-waves {
+      display: inline-block;
+      font-size: 2.2rem;
+      animation: pulseNfc 2s infinite ease-in-out;
+    }
+    @keyframes pulseNfc {
+      0% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.8; }
+    }
+    .action-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+    .action-btn {
+      flex: 1;
+      min-width: 100px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: none;
+      text-align: center;
+      transition: background 0.2s ease;
+    }
+    .btn-wifi {
+      background: #3B82F6;
+      color: #FFFFFF;
+    }
+    .btn-wifi:hover { background: #2563EB; }
+    .btn-nfc {
+      background: #8B5CF6;
+      color: #FFFFFF;
+    }
+    .btn-nfc:hover { background: #7C3AED; }
+    .btn-lock {
+      background: #EF4444;
+      color: #FFFFFF;
+    }
+    .btn-lock:hover { background: #DC2626; }
+    .status-toast {
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      margin-bottom: 14px;
+      font-weight: 600;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .toast-success {
+      background: #DCFCE7;
+      color: #166534;
+      border: 1px solid #86EFAC;
+    }
+    .toast-error {
+      background: #FEE2E2;
+      color: #991B1B;
+      border: 1px solid #FCA5A5;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a href="{{ url_for('dashboard') }}" class="brand">
+      <img src="{{ url_for('assets', filename='imgs/logo/logo.png') }}" alt="The Quest Logo">
+      <div class="brand-info">
+        <span class="brand-title">The Quest • Mobile Console</span>
+        <span class="brand-slogan">"We shall never deny a guest, even the most ridiculous request"</span>
+      </div>
+    </a>
+    
+    <div class="topbar-right">
+      <div class="staff-info">
+        <span class="staff-name">{{ current_user.name }}</span>
+        <span class="staff-clearance">Clearance: {{ current_user.role|replace('_', ' ') }}</span>
+      </div>
+      <form method="post" action="{{ url_for('logout') }}" style="margin: 0;">
+        <button class="signout-btn" type="submit" title="Sign out of console">
+          <span>Sign Out</span>
+        </button>
+      </form>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <nav class="nav" aria-label="Console Navigation">
+      <a href="{{ url_for('dashboard') }}">
+        <span>📊</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="{{ url_for('room_map') }}">
+        <span>🗺️</span>
+        <span>Room map</span>
+      </a>
+      <a href="{{ url_for('doors_page') }}" class="active">
+        <span>🔑</span>
+        <span>Room Keys</span>
+      </a>
+      <a href="{{ url_for('bulletin') }}">
+        <span>📢</span>
+        <span>Bulletin</span>
+      </a>
+      <a href="{{ url_for('inbox') }}">
+        <span>💬</span>
+        <span>Inbox</span>
+      </a>
+    </nav>
+
+    <div class="content">
+      <div id="toast" class="status-toast"></div>
+
+      <!-- Page Banner -->
+      <section class="page-header-card">
+        <div>
+          <h1>Master Key & Door Access Console</h1>
+          <p>Super Key changes daily for hotel staff. Regular keys change when guests check in/out. All keys are securely hashed in the database.</p>
+        </div>
+        <div>
+          <span class="status vacant">Lock System Online</span>
+        </div>
+      </section>
+
+      <!-- Super Key Master Card -->
+      <section class="card" style="margin-top: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <span style="font-size: 0.85rem; text-transform: uppercase; color: var(--color-text-muted); font-weight: 700;">Active Daily Staff Master Key (Super Key)</span>
+            <div style="margin-top: 6px;">
+              <span id="superKeyDisplay" class="key-badge key-badge-gold">👑 {{ super_key.plain_key }}</span>
+              <span style="margin-left: 8px; font-size: 0.85rem; color: var(--color-text-muted);">Valid for Date: <b>{{ super_key.key_date }}</b></span>
+            </div>
+            <span class="key-badge-hash">Database SHA-256 Hash: <b id="superKeyHash">{{ super_key.key_hash }}</b></span>
+          </div>
+          <div>
+            <button class="btn btn-secondary" onclick="rotateSuperKey()" style="padding: 8px 14px; font-size: 0.85rem; border: 1px solid var(--color-accent); color: var(--color-primary-dark);">
+              🔄 Rotate Daily Super Key
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Active WiFi Proximity Simulator Banner -->
+      <section class="card" style="margin-top: 14px; background: #F8FAFC;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.5rem;">📶</span>
+            <div>
+              <span style="font-weight: 700; color: var(--color-text-dark); display: block;">Simulated Connected Wi-Fi Network</span>
+              <span style="font-size: 0.85rem; color: var(--color-text-muted);">WiFi door unlock requires connection to the room's Wi-Fi network (or Staff Master WiFi).</span>
+            </div>
+          </div>
+          <div>
+            <select id="staffWifiSelect" class="input" style="padding: 6px 12px; font-weight: 600;">
+              <option value="{{ staff_wifi }}" selected>🔒 {{ staff_wifi }} (Staff Master WiFi)</option>
+              {% for r in rooms %}
+                <option value="{{ r.wifi_ssid }}">📶 {{ r.wifi_ssid }} (Room {{ r.room_number }})</option>
+              {% endfor %}
+              <option value="Quest_Lobby_Guest_WiFi">☕ Quest_Lobby_Guest_WiFi (Guest Public - Unmatched)</option>
+              <option value="Cellular_No_WiFi">📵 Cellular 5G (No WiFi Connected)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Interactive Quick Unlock & NFC Card -->
+      <section class="card" style="margin-top: 14px;">
+        <h3 style="margin-top: 0; color: var(--color-primary); display: flex; align-items: center; gap: 8px;">
+          <span>🚪</span> Quick Room Door Action
+        </h3>
+        <p style="font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: 12px;">
+          Select a suite and click to unlock using Staff Super Key via Wi-Fi or tap via NFC.
+        </p>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+          <select id="quickRoomSelect" class="input" style="flex: 1; min-width: 200px; padding: 10px;">
+            {% for r in rooms %}
+              <option value="{{ r.id }}" data-room="{{ r.room_number }}" data-wifi="{{ r.wifi_ssid }}" data-state="{{ r.door_state }}">
+                Room {{ r.room_number }} ({{ r.type }}) — Door is {{ r.door_state|upper }}
+              </option>
+            {% endfor %}
+          </select>
+
+          <button class="action-btn btn-wifi" style="padding: 10px 16px;" onclick="unlockViaWifiQuick()">
+            📶 Unlock via Wi-Fi
+          </button>
+          <button class="action-btn btn-lock" style="padding: 10px 16px;" onclick="lockDoorQuick()">
+            🔒 Lock Door
+          </button>
+        </div>
+
+        <!-- NFC Master Tap Zone -->
+        <div class="nfc-tap-zone" onclick="tapNfcQuick()" title="Click to simulate Staff Master NFC Card Tap">
+          <div class="nfc-waves">📡</div>
+          <div style="font-size: 1.15rem; font-weight: 700; margin-top: 6px;">Tap Phone to Door Lock (NFC)</div>
+          <p style="font-size: 0.85rem; opacity: 0.9; margin: 4px 0 0;">
+            Uses Web NFC / Master Key NFC beam. Physical proximity verified — ignores Wi-Fi restrictions.
+          </p>
+        </div>
+      </section>
+
+      <!-- All Rooms Live Status Grid -->
+      <section style="margin-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h2 style="font-size: 1.25rem; color: var(--color-text-dark); margin: 0;">Hotel Suites Door State</h2>
+          <button class="btn btn-secondary" onclick="refreshStatus()" style="font-size: 0.85rem; padding: 6px 12px;">
+            🔄 Refresh Status
+          </button>
+        </div>
+
+        <div class="door-grid" id="roomsDoorGrid">
+          {% for r in rooms %}
+            <div class="room-door-card {{ r.door_state }}" id="card-room-{{ r.id }}">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <h3 style="margin: 0; font-size: 1.15rem; color: var(--color-primary-dark);">Room {{ r.room_number }}</h3>
+                  <small style="color: var(--color-text-muted);">{{ r.type }}</small>
+                </div>
+                <span class="door-status-pill {{ r.door_state }}" id="pill-room-{{ r.id }}">
+                  {{ "🔓 UNLOCKED" if r.door_state == "unlocked" else "🔒 LOCKED" }}
+                </span>
+              </div>
+
+              <div style="font-size: 0.85rem; color: var(--color-text-normal); margin-top: 4px;">
+                <div>Guest: <b>{{ r.guest_name or "None (Vacant)" }}</b></div>
+                <div>Status: <span class="status {{ 'occupied' if r.status == 'Occupied' else 'vacant' }}">{{ r.status }}</span></div>
+                <div style="color: var(--color-text-muted); font-size: 0.8rem; margin-top: 2px;">
+                  Wi-Fi SSID: <code style="color: var(--color-primary);">{{ r.wifi_ssid }}</code>
+                </div>
+                {% if r.active_key_hash %}
+                  <div style="color: var(--color-text-muted); font-size: 0.75rem; margin-top: 2px;">
+                    Active Key Hash: <code>{{ r.active_key_hash[:16] }}...</code>
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="action-row">
+                <button class="action-btn btn-wifi" onclick="unlockRoomDirect({{ r.id }}, 'wifi')">
+                  📶 Wi-Fi
+                </button>
+                <button class="action-btn btn-nfc" onclick="unlockRoomDirect({{ r.id }}, 'nfc')">
+                  📡 NFC Tap
+                </button>
+                <button class="action-btn btn-lock" onclick="lockRoomDirect({{ r.id }})">
+                  🔒 Lock
+                </button>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <!-- Access Audit Logs -->
+      <section class="card" style="margin-top: 24px;">
+        <h3 style="margin-top: 0; color: var(--color-primary);">Recent Door Access Log</h3>
+        <div style="overflow-x: auto;">
+          <table class="table" style="font-size: 0.85rem;">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Room</th>
+                <th>Method</th>
+                <th>Key Type</th>
+                <th>Actor</th>
+                <th>Result</th>
+                <th>Reason / Details</th>
+              </tr>
+            </thead>
+            <tbody id="logsTableBody">
+              {% for log in logs %}
+                <tr>
+                  <td>{{ log.timestamp }}</td>
+                  <td><b>Room {{ log.room_number }}</b></td>
+                  <td><span class="metric-badge" style="background: #EDE9FE; color: #581C87;">{{ log.method|upper }}</span></td>
+                  <td>{{ log.key_type }}</td>
+                  <td>{{ log.user_name or log.user_type }}</td>
+                  <td>
+                    <span class="door-status-pill {{ 'unlocked' if log.status == 'granted' else 'locked' }}" style="font-size: 0.75rem; padding: 2px 8px;">
+                      {{ log.status|upper }}
+                    </span>
+                  </td>
+                  <td style="max-width: 250px; word-break: break-word;">{{ log.reason }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  {% include "_incoming_call.html" %}
+
+  <script>
+    let currentSuperKey = "{{ super_key.plain_key }}";
+
+    function showToast(msg, isSuccess) {
+      const toast = document.getElementById("toast");
+      toast.className = "status-toast " + (isSuccess ? "toast-success" : "toast-error");
+      toast.innerText = msg;
+      toast.style.display = "block";
+      setTimeout(() => { toast.style.display = "none"; }, 5000);
+    }
+
+    async function rotateSuperKey() {
+      if (!confirm("Are you sure you want to rotate today's Daily Super Key?")) return;
+      try {
+        const res = await fetch("{{ url_for('api_rotate_super_key') }}", { method: "POST" });
+        const data = await res.json();
+        if (data.success) {
+          currentSuperKey = data.super_key.plain_key;
+          document.getElementById("superKeyDisplay").innerText = "👑 " + data.super_key.plain_key;
+          document.getElementById("superKeyHash").innerText = data.super_key.key_hash;
+          showToast("Daily Super Key rotated successfully!", true);
+        }
+      } catch (e) {
+        showToast("Error rotating super key: " + e, false);
+      }
+    }
+
+    async function unlockRoomDirect(roomId, method) {
+      const wifiSSID = document.getElementById("staffWifiSelect").value;
+      try {
+        const res = await fetch("{{ url_for('api_unlock_door') }}", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            room_id: roomId,
+            key_token: currentSuperKey,
+            method: method,
+            wifi_ssid: wifiSSID
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message, true);
+          updateCardDoorState(roomId, "unlocked");
+          // Auto relock after 5 seconds in UI
+          setTimeout(() => {
+            updateCardDoorState(roomId, "locked");
+          }, 5000);
+        } else {
+          showToast(data.message, false);
+        }
+      } catch (e) {
+        showToast("Request failed: " + e, false);
+      }
+    }
+
+    async function lockRoomDirect(roomId) {
+      try {
+        const res = await fetch("{{ url_for('api_lock_door') }}", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ room_id: roomId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast("Room door locked.", true);
+          updateCardDoorState(roomId, "locked");
+        }
+      } catch (e) {
+        showToast("Request failed: " + e, false);
+      }
+    }
+
+    function unlockViaWifiQuick() {
+      const roomId = parseInt(document.getElementById("quickRoomSelect").value);
+      unlockRoomDirect(roomId, "wifi");
+    }
+
+    function lockDoorQuick() {
+      const roomId = parseInt(document.getElementById("quickRoomSelect").value);
+      lockRoomDirect(roomId);
+    }
+
+    function tapNfcQuick() {
+      const roomId = parseInt(document.getElementById("quickRoomSelect").value);
+      unlockRoomDirect(roomId, "nfc");
+    }
+
+    function updateCardDoorState(roomId, state) {
+      const card = document.getElementById("card-room-" + roomId);
+      const pill = document.getElementById("pill-room-" + roomId);
+      if (card) {
+        card.className = "room-door-card " + state;
+      }
+      if (pill) {
+        pill.className = "door-status-pill " + state;
+        pill.innerText = state === "unlocked" ? "🔓 UNLOCKED" : "🔒 LOCKED";
+      }
+    }
+
+    async function refreshStatus() {
+      try {
+        const res = await fetch("{{ url_for('api_door_status') }}");
+        const data = await res.json();
+        if (data.rooms) {
+          data.rooms.forEach(r => {
+            updateCardDoorState(r.id, r.door_state);
+          });
+          showToast("Door states refreshed from server.", true);
+        }
+      } catch (e) {
+        showToast("Failed to refresh status.", false);
+      }
+    }
+  </script>
+</body>
+</html>
+

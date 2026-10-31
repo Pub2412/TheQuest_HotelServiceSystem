@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}Suites & Reservations - The Quest Hotel{% endblock %}
+
+{% block content %}
+<section>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+    <h1 class="section-title" style="margin: 0;">
+      <span>🛏️</span> {% if is_checked_in %}Extend Stay & Suites{% else %}Luxury Suites{% endif %}
+    </h1>
+    {% if is_checked_in %}
+      <span style="background: #DCFCE7; color: #166534; font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-full);">
+        Suite {{ active_stay.room_number }} Active
+      </span>
+    {% endif %}
+  </div>
+
+  <!-- Extend Reservation Section (If Currently Checked In) -->
+  {% if is_checked_in and active_stay %}
+    <div class="card" style="background: linear-gradient(135deg, #FAF5FF, #F3E8FF); border: 1.5px solid #C084FC;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+        <span style="font-size: 1.4rem;">📅</span>
+        <h3 style="margin: 0; color: var(--color-primary-dark); font-size: 1.1rem;">Extend Current Stay</h3>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--color-text-normal); margin: 0 0 12px;">
+        Currently checked in to <b>Suite {{ active_stay.room_number }} ({{ active_stay.room_type }})</b>.
+        Current Check-out: <b>{{ active_stay.check_out_date }}</b> (Rate: ₱{{ "{:,.2f}".format(active_stay.price_per_night) }}/night).
+      </p>
+
+      <form id="extendForm" onsubmit="handleExtendStay(event)">
+        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+          <div style="flex: 1;">
+            <label class="form-label" style="font-size: 0.8rem;">Additional Nights:</label>
+            <input type="number" id="extNights" class="input" min="1" max="14" value="1" onchange="calcExtensionCost()" style="font-weight: 700;">
+          </div>
+          <div style="flex: 1;">
+            <label class="form-label" style="font-size: 0.8rem;">Payment Method:</label>
+            <select id="extPayment" class="select">
+              <option value="Credit Card">Credit Card</option>
+              <option value="Debit Card">Debit Card</option>
+              <option value="GCash">GCash / Maya</option>
+              <option value="Room Folio">Charge to Folio</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="background: rgba(255, 255, 255, 0.7); padding: 8px 12px; border-radius: var(--radius-sm); margin-bottom: 12px; font-size: 0.85rem; display: flex; justify-content: space-between;">
+          <span>Total Extension Fee:</span>
+          <b id="extCostDisplay" style="color: var(--color-primary); font-size: 1rem;">
+            ₱{{ "{:,.2f}".format(active_stay.price_per_night) }}
+          </b>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">
+          Confirm Extension & Settle
+        </button>
+      </form>
+    </div>
+  {% endif %}
+
+  <!-- Category Filter Pills -->
+  <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; scrollbar-width: none;">
+    {% for cat in categories %}
+      <a href="{{ url_for('rooms_view', category=cat) }}"
+         style="padding: 6px 14px; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 600; text-decoration: none; white-space: nowrap; transition: all 0.2s;
+                background: {{ 'var(--color-primary)' if selected_category == cat else '#FFFFFF' }};
+                color: {{ '#FFFFFF' if selected_category == cat else 'var(--color-text-normal)' }};
+                border: 1px solid {{ 'var(--color-primary)' if selected_category == cat else 'var(--color-border)' }};">
+        {{ cat }}
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- Rooms List -->
+  <div style="display: flex; flex-direction: column; gap: 14px;">
+    {% for r in rooms %}
+      <div class="card" style="padding: 0; overflow: hidden;">
+        <img src="{{ url_for('serve_shared_assets', filename=r.image.replace('assets/', '')) }}" alt="{{ r.type }}" style="width: 100%; height: 180px; object-fit: cover;">
+        <div style="padding: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--color-accent-text); font-weight: 700; background: var(--color-accent-light); padding: 2px 6px; border-radius: 4px;">
+                {{ r.category }}
+              </span>
+              <h3 style="margin: 4px 0 2px; font-size: 1.15rem; color: var(--color-primary-dark);">Suite {{ r.room_number }} • {{ r.type }}</h3>
+              <small style="color: var(--color-text-muted);">{{ r.floor }} • {{ r.bed }} • {{ r.size }}</small>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-size: 1.25rem; font-weight: 800; color: var(--color-primary);">₱{{ "{:,.2f}".format(r.price_per_night) }}</span>
+              <small style="display: block; font-size: 0.7rem; color: var(--color-text-muted);">per night</small>
+            </div>
+          </div>
+
+          <p style="font-size: 0.85rem; color: var(--color-text-normal); margin: 10px 0 12px; line-height: 1.4;">
+            {{ r.description }}
+          </p>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px;">
+            {% for am in r.amenities[:4] %}
+              <span style="background: var(--color-bg); font-size: 0.72rem; color: var(--color-text-muted); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--color-border);">
+                {{ am }}
+              </span>
+            {% endfor %}
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--color-border); padding-top: 10px;">
+            <span class="status" style="font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; font-weight: 700;
+                  background: {{ '#DCFCE7' if r.is_available else '#FEE2E2' }};
+                  color: {{ '#166534' if r.is_available else '#991B1B' }};">
+              {{ r.status_badge }}
+            </span>
+
+            {% if current_user %}
+              <button class="btn btn-primary" onclick="openBookModal({{ r.id }}, '{{ r.room_number }}', '{{ r.type }}', {{ r.price_per_night }})">
+                Book Suite
+              </button>
+            {% else %}
+              <a href="{{ url_for('login_view') }}" class="btn btn-secondary" style="font-size: 0.85rem;">
+                Sign In to Reserve
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Booking Modal Sheet -->
+<div id="bookModal" class="mobile-modal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div>
+        <h3 id="bookSuiteTitle" class="modal-title">Reserve Suite</h3>
+        <small id="bookSuiteSubtitle" style="color: var(--color-text-muted);">Luxury Guest Reservation</small>
+      </div>
+      <button class="modal-close" onclick="closeModal('bookModal')">✕</button>
+    </div>
+
+    <form id="bookForm" onsubmit="handleBookReservation(event)">
+      <input type="hidden" id="bookRoomId">
+      <input type="hidden" id="bookPricePerNight">
+
+      <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+        <div style="flex: 1;">
+          <label class="form-label">Check-In Date:</label>
+          <input type="date" id="bookCheckIn" class="input" required onchange="calcBookingTotal()">
+        </div>
+        <div style="flex: 1;">
+          <label class="form-label">Check-Out Date:</label>
+          <input type="date" id="bookCheckOut" class="input" required onchange="calcBookingTotal()">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Number of Guests:</label>
+        <select id="bookGuests" class="select">
+          <option value="1">1 Guest</option>
+          <option value="2" selected>2 Guests</option>
+          <option value="3">3 Guests</option>
+          <option value="4">4 Guests</option>
+          <option value="5">5+ Guests</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
+          <span>👑 Special / Ridiculous Request (Optional):</span>
+        </label>
+        <textarea id="bookSpecialRequest" class="textarea" rows="2" placeholder="Tell our concierge any desire, however ridiculous..."></textarea>
+      </div>
+
+      <!-- Price Breakdown -->
+      <div style="background: var(--color-bg); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--color-border); margin-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+          <span id="breakdownNights">0 nights:</span>
+          <span id="breakdownSubtotal">₱0.00</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #059669; margin-bottom: 6px;">
+          <span>Loyalty Points You Will Earn:</span>
+          <b id="breakdownPoints">+0 pts</b>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 1.1rem; color: var(--color-primary-dark); border-top: 1px solid var(--color-border); padding-top: 6px;">
+          <span>Grand Total:</span>
+          <span id="breakdownGrandTotal">₱0.00</span>
+        </div>
+      </div>
+
+      <button type="submit" id="btnConfirmBooking" class="btn btn-primary btn-block">
+        Confirm Reservation & Charge
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const activeRate = {{ active_stay.price_per_night if active_stay else 0 }};
+
+  function calcExtensionCost() {
+    const nights = parseInt(document.getElementById("extNights").value) || 1;
+    const total = nights * activeRate;
+    document.getElementById("extCostDisplay").innerText = "₱" + total.toLocaleString('en-US', {minimumFractionDigits: 2});
+  }
+
+  async function handleExtendStay(e) {
+    e.preventDefault();
+    const nights = parseInt(document.getElementById("extNights").value) || 1;
+    const payment = document.getElementById("extPayment").value;
+
+    try {
+      const res = await fetch("/api/reservations/extend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ additional_days: nights, payment_method: payment })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, true);
+        setTimeout(() => { location.reload(); }, 1800);
+      } else {
+        showToast(data.message, false);
+      }
+    } catch (err) {
+      showToast("Extension request failed: " + err, false);
+    }
+  }
+
+  function openBookModal(roomId, roomNumber, roomType, rate) {
+    document.getElementById("bookRoomId").value = roomId;
+    document.getElementById("bookPricePerNight").value = rate;
+    document.getElementById("bookSuiteTitle").innerText = "Reserve Suite " + roomNumber;
+    document.getElementById("bookSuiteSubtitle").innerText = roomType + " • ₱" + rate.toLocaleString() + "/night";
+
+    // Default dates: tomorrow to day after tomorrow
+    const today = new Date();
+    const cin = new Date(today.getTime() + 86400000);
+    const cout = new Date(today.getTime() + 86400000 * 3);
+
+    document.getElementById("bookCheckIn").value = cin.toISOString().split("T")[0];
+    document.getElementById("bookCheckOut").value = cout.toISOString().split("T")[0];
+
+    calcBookingTotal();
+    openModal("bookModal");
+  }
+
+  function calcBookingTotal() {
+    const rate = parseFloat(document.getElementById("bookPricePerNight").value) || 0;
+    const cinStr = document.getElementById("bookCheckIn").value;
+    const coutStr = document.getElementById("bookCheckOut").value;
+
+    if (!cinStr || !coutStr) return;
+    const cin = new Date(cinStr);
+    const cout = new Date(coutStr);
+    const diffTime = cout - cin;
+    const nights = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+
+    const total = nights * rate;
+    const points = Math.floor(total / 100);
+
+    document.getElementById("breakdownNights").innerText = nights + " night(s) x ₱" + rate.toLocaleString() + ":";
+    document.getElementById("breakdownSubtotal").innerText = "₱" + total.toLocaleString('en-US', {minimumFractionDigits: 2});
+    document.getElementById("breakdownPoints").innerText = "+" + points.toLocaleString() + " pts";
+    document.getElementById("breakdownGrandTotal").innerText = "₱" + total.toLocaleString('en-US', {minimumFractionDigits: 2});
+
+    const btn = document.getElementById("btnConfirmBooking");
+    if (nights <= 0) {
+      btn.disabled = true;
+      btn.innerText = "Check-out must be after Check-in";
+    } else {
+      btn.disabled = false;
+      btn.innerText = "Confirm Reservation • ₱" + total.toLocaleString('en-US', {minimumFractionDigits: 2});
+    }
+  }
+
+  async function handleBookReservation(e) {
+    e.preventDefault();
+    const roomId = parseInt(document.getElementById("bookRoomId").value);
+    const checkIn = document.getElementById("bookCheckIn").value;
+    const checkOut = document.getElementById("bookCheckOut").value;
+    const guests = document.getElementById("bookGuests").value;
+    const req = document.getElementById("bookSpecialRequest").value;
+
+    try {
+      const res = await fetch("/api/reservations/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room_id: roomId,
+          check_in_date: checkIn,
+          check_out_date: checkOut,
+          num_guests: guests,
+          special_requests: req
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, true);
+        closeModal("bookModal");
+        setTimeout(() => { location.href = "{{ url_for('profile_view') }}"; }, 2000);
+      } else {
+        showToast(data.message, false);
+      }
+    } catch (err) {
+      showToast("Reservation failed: " + err, false);
+    }
+  }
+</script>
+{% endblock %}
+

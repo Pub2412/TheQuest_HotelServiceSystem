@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}The Quest Hotel - Mobile Guest Portal{% endblock %}
+
+{% block content %}
+<!-- Active Stay Countdown Widget (Shown when Checked In) -->
+{% if is_checked_in and active_stay %}
+  <div class="stay-widget">
+    <div class="stay-header">
+      <div>
+        <span class="stay-room-badge">Suite {{ active_stay.room_number }}</span>
+        <div style="font-size: 0.85rem; opacity: 0.9;">{{ active_stay.room_type }}</div>
+      </div>
+      <div>
+        <span class="stay-status-tag">Checked In</span>
+      </div>
+    </div>
+
+    <div style="font-size: 0.8rem; color: #FEF3C7; margin-bottom: 6px;">
+      Time Remaining On Stay:
+    </div>
+
+    <!-- Live Countdown Clock -->
+    <div class="stay-countdown-bar">
+      <div class="countdown-unit">
+        <span class="countdown-num" id="cd-days">{{ "%02d"|format(active_stay.countdown.days) }}</span>
+        <span class="countdown-lbl">Days</span>
+      </div>
+      <div class="countdown-unit">
+        <span class="countdown-num" id="cd-hours">{{ "%02d"|format(active_stay.countdown.hours) }}</span>
+        <span class="countdown-lbl">Hours</span>
+      </div>
+      <div class="countdown-unit">
+        <span class="countdown-num" id="cd-mins">{{ "%02d"|format(active_stay.countdown.minutes) }}</span>
+        <span class="countdown-lbl">Mins</span>
+      </div>
+      <div class="countdown-unit">
+        <span class="countdown-num" id="cd-secs">{{ "%02d"|format(active_stay.countdown.seconds) }}</span>
+        <span class="countdown-lbl">Secs</span>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 8px; margin-top: 12px;">
+      <a href="{{ url_for('key_view') }}" class="btn btn-accent" style="flex: 1; font-size: 0.85rem; padding: 8px;">
+        🔑 Open Room Key
+      </a>
+      <a href="{{ url_for('rooms_view') }}" class="btn" style="flex: 1; font-size: 0.85rem; padding: 8px; background: rgba(255,255,255,0.2); color: #fff;">
+        📅 Extend Stay
+      </a>
+    </div>
+  </div>
+{% endif %}
+
+<!-- Quick Actions Grid (Conditional based on Check-In status) -->
+<section>
+  <h2 class="section-title">
+    <span>✨</span> Quick Concierge
+  </h2>
+  
+  <div class="quick-grid">
+    <!-- Profile -->
+    <a href="{{ url_for('profile_view') }}" class="quick-action-card">
+      <span class="quick-action-icon">👤</span>
+      <span class="quick-action-label">Profile</span>
+    </a>
+
+    <!-- Make / Extend Reservation -->
+    <a href="{{ url_for('rooms_view') }}" class="quick-action-card">
+      <span class="quick-action-icon">🛏️</span>
+      <span class="quick-action-label">{% if is_checked_in %}Extend Stay{% else %}Book Suite{% endif %}</span>
+    </a>
+
+    <!-- Digital Room Key -->
+    <a href="{{ url_for('key_view') }}" class="quick-action-card">
+      <span class="quick-action-icon">🔑</span>
+      <span class="quick-action-label">Room Key</span>
+    </a>
+
+    <!-- Ask Questions (Active only if checked in) -->
+    {% if is_checked_in %}
+      <a href="{{ url_for('ask_view') }}" class="quick-action-card">
+        <span class="quick-action-icon">💬</span>
+        <span class="quick-action-label">Ask Desk</span>
+      </a>
+    {% else %}
+      <div class="quick-action-card disabled" title="Requires active checked-in stay">
+        <span class="quick-action-icon">💬</span>
+        <span class="quick-action-label">Ask Desk</span>
+      </div>
+    {% endif %}
+
+    <!-- Request Service (Active only if checked in) -->
+    {% if is_checked_in %}
+      <a href="{{ url_for('services_view') }}" class="quick-action-card">
+        <span class="quick-action-icon">🛎️</span>
+        <span class="quick-action-label">Dining & Spa</span>
+      </a>
+    {% else %}
+      <div class="quick-action-card disabled" title="Requires active checked-in stay">
+        <span class="quick-action-icon">🛎️</span>
+        <span class="quick-action-label">Services</span>
+      </div>
+    {% endif %}
+
+    <!-- Loyalty Rewards -->
+    <a href="{{ url_for('rewards_view') }}" class="quick-action-card">
+      <span class="quick-action-icon">🎁</span>
+      <span class="quick-action-label">Rewards</span>
+    </a>
+
+    <!-- About Hotel -->
+    <a href="{{ url_for('about_view') }}" class="quick-action-card">
+      <span class="quick-action-icon">ℹ️</span>
+      <span class="quick-action-label">About</span>
+    </a>
+
+    <!-- Hotel Map -->
+    <a href="{{ url_for('about_view') }}#map" class="quick-action-card">
+      <span class="quick-action-icon">🗺️</span>
+      <span class="quick-action-label">Hotel Map</span>
+    </a>
+
+    <!-- In-Room Dining shortcut -->
+    {% if is_checked_in %}
+      <a href="{{ url_for('services_view') }}#dining" class="quick-action-card">
+        <span class="quick-action-icon">🍷</span>
+        <span class="quick-action-label">In-Room Dining</span>
+      </a>
+    {% else %}
+      <div class="quick-action-card disabled" title="Requires active checked-in stay">
+        <span class="quick-action-icon">🍷</span>
+        <span class="quick-action-label">Dining</span>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Promotional Highlights Banner -->
+<section style="margin-top: 6px;">
+  <div style="background: linear-gradient(135deg, #3B185F, #23073D); color: #fff; border-radius: var(--radius-lg); padding: 18px; margin-bottom: 16px; border: 1px solid var(--color-accent); box-shadow: var(--shadow-card);">
+    <span style="background: var(--color-accent); color: #78350F; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: var(--radius-full); text-transform: uppercase;">
+      Exclusive Privilege
+    </span>
+    <h3 style="margin: 8px 0 4px; font-size: 1.15rem; color: #FFFFFF;">
+      "We shall never deny a guest, even the most ridiculous request"
+    </h3>
+    <p style="font-size: 0.85rem; color: rgba(255,255,255,0.85); margin: 0 0 12px;">
+      Welcome to The Quest. Immerse yourself in bespoke comfort with digital room unlocking, gourmet in-room dining, and 24/7 royal concierge service.
+    </p>
+    {% if not current_user %}
+      <a href="{{ url_for('login_view') }}" class="btn btn-accent" style="padding: 8px 16px; font-size: 0.85rem;">
+        Sign In / Join With 100 Welcome Points
+      </a>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Featured Luxury Suites Preview -->
+<section>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <h2 class="section-title" style="margin: 0;">
+      <span>🏨</span> Featured Suites
+    </h2>
+    <a href="{{ url_for('rooms_view') }}" style="font-size: 0.82rem; font-weight: 700; color: var(--color-primary); text-decoration: none;">
+      View All →
+    </a>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px;">
+    {% for r in featured_rooms %}
+      <div class="card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+        <img src="{{ url_for('serve_shared_assets', filename=r.image.replace('assets/', '')) }}" alt="{{ r.type }}" style="width: 100%; height: 160px; object-fit: cover;">
+        <div style="padding: 12px 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <h3 style="margin: 0; font-size: 1.05rem; color: var(--color-primary-dark);">Room {{ r.room_number }} • {{ r.type }}</h3>
+              <small style="color: var(--color-text-muted);">{{ r.floor }} • {{ r.bed }}</small>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-size: 1.1rem; font-weight: 800; color: var(--color-primary);">₱{{ "{:,.2f}".format(r.price_per_night) }}</span>
+              <small style="display: block; font-size: 0.7rem; color: var(--color-text-muted);">per night</small>
+            </div>
+          </div>
+          <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <span class="status {{ 'vacant' if r.is_available else 'occupied' }}" style="font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; background: {{ '#DCFCE7' if r.is_available else '#FEE2E2' }}; color: {{ '#166534' if r.is_available else '#991B1B' }}; font-weight: 700;">
+              {{ r.status_badge }}
+            </span>
+            <a href="{{ url_for('rooms_view') }}" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.8rem;">
+              Reserve
+            </a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if is_checked_in and active_stay and active_stay.countdown %}
+<script>
+  initCountdown("{{ active_stay.countdown.target_iso }}");
+</script>
+{% endif %}
+{% endblock %}
+

@@ -19,6 +19,7 @@ from pathlib import Path
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from database.db import get_connection
+from database.key_service import mint_room_key, revoke_room_key
 from utils.theme import (
     COLOR_PRIMARY_DARK, COLOR_PRIMARY, COLOR_PRIMARY_LIGHT, COLOR_PRIMARY_TINT,
     COLOR_ACCENT, COLOR_ACCENT_HOVER, COLOR_ACCENT_LIGHT, COLOR_ACCENT_TEXT,
@@ -330,6 +331,7 @@ class CashierPage(tk.Frame):
                 conn.execute("UPDATE reservations SET status = 'Checked In' WHERE id = ?", (res_id,))
                 conn.execute("UPDATE rooms SET status = 'Occupied', is_occupied = 1, is_reserved = 0 WHERE id = ?", (res["room_id"],))
                 conn.commit()
+                mint_room_key(res["room_id"], res["customer_id"], res_id)
 
             messagebox.showinfo("Check-In Complete", f"Reservation #{res_id} is now Checked In. Room keycard issued!")
             load_reservations(stat_var.get())
@@ -412,6 +414,7 @@ class CashierPage(tk.Frame):
                 """, (res["room_id"], res["customer_id"]))
 
                 conn.commit()
+                revoke_room_key(res["room_id"], res_id)
 
             messagebox.showinfo("Checkout Complete", f"Guest checked out successfully!\nRoom {res['room_number']} marked for housekeeping service.")
             load_reservations(stat_var.get())

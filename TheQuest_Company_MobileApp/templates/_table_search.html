@@ -1,19 +1,79 @@
 <script>
   (() => {
-    document.querySelectorAll(".table-wrap table").forEach((table, index) => {
+    document.querySelectorAll(".table-wrap table").forEach((table) => {
       const wrapper = table.parentElement;
-      const search = document.createElement("input");
-      search.type = "search";
-      search.className = "table-search";
-      search.placeholder = "Search this list...";
-      search.setAttribute("aria-label", "Search list");
-      search.addEventListener("input", () => {
-        const query = search.value.trim().toLocaleLowerCase();
-        table.querySelectorAll("tbody tr").forEach(row => {
-          row.hidden = query && !row.textContent.toLocaleLowerCase().includes(query);
+      const section = wrapper.closest("section") || wrapper.parentElement;
+      
+      // Prevent duplicate search toolbars
+      if (section.querySelector(".search-container")) return;
+
+      const container = document.createElement("div");
+      container.className = "search-container";
+
+      container.innerHTML = `
+        <div class="search-input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="search" class="table-search" placeholder="Filter records, rooms, staff, status..." aria-label="Search records">
+          <button type="button" class="search-clear-btn" style="display: none;" title="Clear filter">✕</button>
+        </div>
+        <div class="search-count-badge" style="display: none;"></div>
+      `;
+
+      const input = container.querySelector(".table-search");
+      const clearBtn = container.querySelector(".search-clear-btn");
+      const countBadge = container.querySelector(".search-count-badge");
+
+      const performFilter = () => {
+        const query = input.value.trim().toLocaleLowerCase();
+        clearBtn.style.display = query ? "block" : "none";
+
+        let visibleRows = 0;
+        let totalRows = 0;
+
+        // Filter Table rows
+        const tableRows = table.querySelectorAll("tbody tr");
+        tableRows.forEach(row => {
+          if (row.cells.length === 1 && row.cells[0].getAttribute("colspan")) return;
+          totalRows++;
+          const text = row.textContent.toLocaleLowerCase();
+          const match = !query || text.includes(query);
+          row.style.display = match ? "" : "none";
+          if (match) visibleRows++;
         });
+
+        // Filter Mobile Cards
+        const mobileCards = section.querySelectorAll(".mobile-record-card, .room-card-item");
+        if (mobileCards.length > 0) {
+          totalRows = mobileCards.length;
+          visibleRows = 0;
+          mobileCards.forEach(card => {
+            const text = card.textContent.toLocaleLowerCase();
+            const match = !query || text.includes(query);
+            card.style.display = match ? "" : "none";
+            if (match) visibleRows++;
+          });
+        }
+
+        if (query) {
+          countBadge.style.display = "block";
+          countBadge.textContent = `Showing ${visibleRows} of ${totalRows} active record${totalRows === 1 ? '' : 's'}`;
+        } else {
+          countBadge.style.display = "none";
+        }
+      };
+
+      input.addEventListener("input", performFilter);
+
+      clearBtn.addEventListener("click", () => {
+        input.value = "";
+        performFilter();
+        input.focus();
       });
-      wrapper.parentElement.insertBefore(search, wrapper);
+
+      wrapper.parentElement.insertBefore(container, wrapper);
     });
   })();
 </script>

@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In / Register - The Quest Hotel{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 440px; margin: 20px auto; padding: 24px 20px;">
+  <!-- Logo & Title -->
+  <div style="text-align: center; margin-bottom: 20px;">
+    <img src="{{ url_for('assets', filename='imgs/logo/logo.png') }}" alt="Logo" style="width: 64px; height: 64px; border-radius: 12px; border: 2px solid var(--color-accent);">
+    <h2 style="margin: 10px 0 2px; color: var(--color-primary-dark); font-size: 1.35rem;">The Quest Luxury</h2>
+    <p style="margin: 0; font-size: 0.8rem; color: var(--color-accent-text); font-weight: 600;">
+      "We shall never deny a guest, even the most ridiculous request"
+    </p>
+  </div>
+
+  <!-- Segmented Tabs: Sign In vs Register -->
+  <div style="display: flex; background: var(--color-bg); padding: 4px; border-radius: var(--radius-md); border: 1px solid var(--color-border); margin-bottom: 20px;">
+    <button id="tabBtnLogin" type="button" class="btn" onclick="switchAuthTab('login')" style="flex: 1; padding: 8px; font-size: 0.85rem; background: var(--color-primary); color: #FFFFFF;">
+      Sign In
+    </button>
+    <button id="tabBtnRegister" type="button" class="btn btn-secondary" onclick="switchAuthTab('register')" style="flex: 1; padding: 8px; font-size: 0.85rem; border: none;">
+      Join (100 Pts)
+    </button>
+  </div>
+
+  <!-- Lockout Banner -->
+  <div id="lockoutBanner" style="display: none; background: #FEE2E2; border: 1px solid #FCA5A5; color: #991B1B; padding: 12px; border-radius: var(--radius-md); margin-bottom: 16px; font-size: 0.85rem; text-align: center;">
+    🔒 Security Lockout Active: <b id="lockoutTimer">60</b>s remaining.
+  </div>
+
+  <!-- Sign In Form -->
+  <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+    <div class="form-group">
+      <label class="form-label">Email or Mobile Number:</label>
+      <input type="text" id="loginIdentifier" class="input" placeholder="e.g. amelia.watson@gmail.com" required>
+    </div>
+
+    <div class="form-group">
+      <div style="display: flex; justify-content: space-between;">
+        <label class="form-label">Password:</label>
+        <a href="javascript:void(0)" onclick="openModal('forgotModal')" style="font-size: 0.75rem; color: var(--color-primary); font-weight: 600; text-decoration: none;">Forgot?</a>
+      </div>
+      <input type="password" id="loginPassword" class="input" placeholder="••••••••" required>
+    </div>
+
+    <button type="submit" id="btnLoginSubmit" class="btn btn-primary btn-block" style="margin-top: 16px;">
+      Sign In to Guest Portal
+    </button>
+  </form>
+
+  <!-- Register Form -->
+  <form id="registerForm" onsubmit="handleRegisterSubmit(event)" style="display: none;" enctype="multipart/form-data">
+    <div class="form-group">
+      <label class="form-label">Full Name:</label>
+      <input type="text" id="regName" class="input" placeholder="e.g. Amelia Watson" required>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Email Address:</label>
+      <input type="email" id="regEmail" class="input" placeholder="amelia@example.com">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Mobile Number:</label>
+      <input type="tel" id="regMobile" class="input" placeholder="+63 919 123 4567">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Create Password:</label>
+      <input type="password" id="regPassword" class="input" placeholder="Min. 6 characters" required>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Profile Photo (Optional):</label>
+      <input type="file" id="regPhoto" class="input" accept="image/*">
+    </div>
+
+    <div style="background: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46; padding: 10px; border-radius: var(--radius-sm); font-size: 0.8rem; margin-bottom: 14px;">
+      🎁 <b>100 Welcome Points:</b> New accounts immediately receive 100 loyalty points for dining & spa vouchers!
+    </div>
+
+    <button type="submit" class="btn btn-accent btn-block">
+      Register & Claim 100 Points
+    </button>
+  </form>
+
+  <!-- Social One-Click Login -->
+  <div style="margin-top: 24px; text-align: center;">
+    <div style="display: flex; align-items: center; margin-bottom: 14px;">
+      <div style="flex: 1; height: 1px; background: var(--color-border);"></div>
+      <span style="padding: 0 10px; font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase;">Or One-Click Social</span>
+      <div style="flex: 1; height: 1px; background: var(--color-border);"></div>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+      <button type="button" class="btn btn-secondary" style="flex: 1; font-size: 0.85rem;" onclick="handleSocialAuth('Google')">
+        <span style="font-weight: 700; color: #EA4335;">G</span> Google
+      </button>
+      <button type="button" class="btn btn-secondary" style="flex: 1; font-size: 0.85rem;" onclick="handleSocialAuth('Facebook')">
+        <span style="font-weight: 700; color: #1877F2;">f</span> Facebook
+      </button>
+    </div>
+  </div>
+
+  <!-- Demo Accounts Hint -->
+  <div style="margin-top: 20px; padding: 10px; background: var(--color-bg); border-radius: var(--radius-md); font-size: 0.75rem; color: var(--color-text-muted);">
+    <b>Demo Account:</b> <code>amelia.watson@gmail.com</code> / <code>Password123!</code> (Checked in to Suite 102).
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div id="forgotModal" class="mobile-modal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h3 class="modal-title">Reset Password</h3>
+      <button class="modal-close" onclick="closeModal('forgotModal')">✕</button>
+    </div>
+    <form onsubmit="handleForgotSubmit(event)">
+      <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0;">
+        Enter your registered email address or mobile number to reset your password.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Email or Mobile:</label>
+        <input type="text" id="forgotIdentifier" class="input" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">New Password:</label>
+        <input type="password" id="forgotNewPassword" class="input" required placeholder="New password">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Reset Password</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  let lockoutInterval = null;
+
+  function switchAuthTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById("loginForm").style.display = isLogin ? "block" : "none";
+    document.getElementById("registerForm").style.display = isLogin ? "none" : "block";
+
+    const btnL = document.getElementById("tabBtnLogin");
+    const btnR = document.getElementById("tabBtnRegister");
+
+    if (isLogin) {
+      btnL.style.background = "var(--color-primary)";
+      btnL.style.color = "#FFFFFF";
+      btnR.style.background = "none";
+      btnR.style.color = "var(--color-text-normal)";
+    } else {
+      btnR.style.background = "var(--color-primary)";
+      btnR.style.color = "#FFFFFF";
+      btnL.style.background = "none";
+      btnL.style.color = "var(--color-text-normal)";
+    }
+  }
+
+  function startLockoutTimer(seconds) {
+    const banner = document.getElementById("lockoutBanner");
+    const timer = document.getElementById("lockoutTimer");
+    const submitBtn = document.getElementById("btnLoginSubmit");
+
+    banner.style.display = "block";
+    submitBtn.disabled = true;
+    let remaining = seconds;
+    timer.innerText = remaining;
+
+    if (lockoutInterval) clearInterval(lockoutInterval);
+    lockoutInterval = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(lockoutInterval);
+        banner.style.display = "none";
+        submitBtn.disabled = false;
+      } else {
+        timer.innerText = remaining;
+      }
+    }, 1000);
+  }
+
+  async function handleLoginSubmit(e) {
+    e.preventDefault();
+    const id = document.getElementById("loginIdentifier").value;
+    const pwd = document.getElementById("loginPassword").value;
+
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: id, password: pwd })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, true);
+        setTimeout(() => { location.href = "{{ url_for('index') }}"; }, 1000);
+      } else {
+        showToast(data.message, false);
+        if (data.is_locked && data.lockout_seconds > 0) {
+          startLockoutTimer(data.lockout_seconds);
+        }
+      }
+    } catch (err) {
+      showToast("Sign in failed: " + err, false);
+    }
+  }
+
+  async function handleRegisterSubmit(e) {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append("name", document.getElementById("regName").value);
+    formData.append("email", document.getElementById("regEmail").value);
+    formData.append("mobile_number", document.getElementById("regMobile").value);
+    formData.append("password", document.getElementById("regPassword").value);
+    const photo = document.getElementById("regPhoto").files[0];
+    if (photo) formData.append("profile_image", photo);
+
+    try {
+      const res = await fetch("/api/register", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, true);
+        setTimeout(() => { location.href = "{{ url_for('index') }}"; }, 1500);
+      } else {
+        showToast(data.message, false);
+      }
+    } catch (err) {
+      showToast("Registration failed: " + err, false);
+    }
+  }
+
+  async function handleSocialAuth(provider) {
+    try {
+      const res = await fetch("/api/social-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: provider })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, true);
+        setTimeout(() => { location.href = "{{ url_for('index') }}"; }, 1000);
+      } else {
+        showToast(data.message, false);
+      }
+    } catch (err) {
+      showToast("Social login failed: " + err, false);
+    }
+  }
+
+  async function handleForgotSubmit(e) {
+    e.preventDefault();
+    const id = document.getElementById("forgotIdentifier").value;
+    const pwd = document.getElementById("forgotNewPassword").value;
+
+    try {
+      const res = await fetch("/api/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: id, new_password: pwd })
+      });
+      const data = await res.json();
+      showToast(data.message, data.success);
+      if (data.success) {
+        closeModal("forgotModal");
+      }
+    } catch (err) {
+      showToast("Reset failed: " + err, false);
+    }
+  }
+</script>
+{% endblock %}
+

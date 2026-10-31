@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Ask Concierge & Front Desk - The Quest Hotel{% endblock %}
+
+{% block content %}
+<section>
+  <h1 class="section-title">
+    <span>💬</span> Front Desk & Concierge
+  </h1>
+
+  {% if is_checked_in and stay %}
+    <!-- Callback Request Banner -->
+    <div class="card" style="background: #F0FDF4; border: 1.5px solid #86EFAC; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h3 style="margin: 0 0 2px; font-size: 1rem; color: #166534;">Request Urgent Desk Callback</h3>
+        <small style="color: #15803D;">An associate will phone your suite or mobile within 3 minutes.</small>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('callbackModal')" style="padding: 6px 12px; font-size: 0.8rem; background: #059669;">
+        📞 Call Me
+      </button>
+    </div>
+
+    <!-- Live Inquiries Thread -->
+    <div class="card" style="padding: 16px;">
+      <h3 style="margin: 0 0 12px; font-size: 1.05rem; color: var(--color-primary-dark);">
+        Live Messaging Thread
+      </h3>
+
+      <div id="chatHistory" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; margin-bottom: 14px; padding-right: 4px;">
+        {% if inquiries %}
+          {% for inq in inquiries %}
+            <!-- Guest Message -->
+            <div style="align-self: flex-end; max-width: 85%; background: var(--color-primary); color: #FFFFFF; padding: 10px 14px; border-radius: 14px 14px 2px 14px; font-size: 0.88rem;">
+              <small style="display: block; font-size: 0.7rem; opacity: 0.75; margin-bottom: 2px;">{{ inq.department }} • You</small>
+              {{ inq.message }}
+            </div>
+            <!-- Staff Auto / Live Response -->
+            {% if inq.response %}
+              <div style="align-self: flex-start; max-width: 85%; background: #F1F5F9; color: var(--color-text-dark); padding: 10px 14px; border-radius: 14px 14px 14px 2px; font-size: 0.88rem; border: 1px solid var(--color-border);">
+                <small style="display: block; font-size: 0.7rem; color: var(--color-primary); font-weight: 700; margin-bottom: 2px;">{{ inq.department }} Attendant</small>
+                {{ inq.response }}
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <div style="text-align: center; color: var(--color-text-muted); padding: 20px 0; font-size: 0.85rem;">
+            No messages yet. Send an inquiry below to chat with the front desk.
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- New Inquiry Form -->
+      <form onsubmit="handleSendInquiry(event)">
+        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+          <select id="inqDept" class="select" style="flex: 1; padding: 8px; font-size: 0.82rem;">
+            <option value="Front Desk" selected>Front Desk</option>
+            <option value="Concierge">Concierge</option>
+            <option value="Housekeeping">Housekeeping</option>
+            <option value="Room Service">Room Service</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="inqMsg" class="input" placeholder="Ask questions, request extra towels..." required style="flex: 1;">
+          <button type="submit" class="btn btn-primary" style="padding: 10px 16px;">
+            Send
+          </button>
+        </div>
+      </form>
+    </div>
+
+  {% else %}
+    <!-- Locked State for Guests Not Checked In -->
+    <div class="card" style="text-align: center; padding: 30px 16px;">
+      <span style="font-size: 3.5rem; display: block; margin-bottom: 10px;">💬</span>
+      <h2 style="margin: 0 0 8px; color: var(--color-primary-dark); font-size: 1.25rem;">Front Desk Communications</h2>
+      <p style="font-size: 0.88rem; color: var(--color-text-muted); margin: 0 0 16px;">
+        Direct suite messaging with Concierge and urgent Desk Callbacks are activated when you check in to your suite.
+      </p>
+      <a href="{{ url_for('rooms_view') }}" class="btn btn-primary">
+        Explore & Reserve Suites
+      </a>
+    </div>
+  {% endif %}
+</section>
+
+<!-- Callback Request Modal -->
+<div id="callbackModal" class="mobile-modal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h3 class="modal-title">Request Phone Callback</h3>
+      <button class="modal-close" onclick="closeModal('callbackModal')">✕</button>
+    </div>
+    <form onsubmit="handleCallbackSubmit(event)">
+      <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-top: 0;">
+        Our Guest Relations team will call you within 2 to 3 minutes.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Phone Number to Ring:</label>
+        <input type="tel" id="cbPhone" class="input" value="{{ current_user.mobile_number if current_user else '' }}" placeholder="+63 919 123 4567" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Urgency or Details:</label>
+        <input type="text" id="cbNotes" class="input" placeholder="e.g. In-suite maintenance, airport limo dispatch">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Confirm Callback Request</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  async function handleSendInquiry(e) {
+    e.preventDefault();
+    const dept = document.getElementById("inqDept").value;
+    const msg = document.getElementById("inqMsg").value;
+
+    try {
+      const res = await fetch("/api/ask/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ department: dept, message: msg })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("Message sent to " + dept, true);
+        document.getElementById("inqMsg").value = "";
+        setTimeout(() => { location.reload(); }, 1000);
+      } else {
+        showToast(data.message, false);
+      }
+    } catch (err) {
+      showToast("Message failed: " + err, false);
+    }
+  }
+
+  async function handleCallbackSubmit(e) {
+    e.preventDefault();
+    const phone = document.getElementById("cbPhone").value;
+    const notes = document.getElementById("cbNotes").value;
+
+    try {
+      const res = await fetch("/api/ask/callback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: phone, notes: notes })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, true);
+        closeModal("callbackModal");
+      } else {
+        showToast(data.message, false);
+      }
+    } catch (err) {
+      showToast("Callback request failed: " + err, false);
+    }
+  }
+</script>
+{% endblock %}
+

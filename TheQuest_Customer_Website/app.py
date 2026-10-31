@@ -14,7 +14,7 @@ from flask import (
 )
 
 # Add current folder to sys.path so backend package is importable
-APP_DIR = Path(__file__).resolve().parent
+APP_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = APP_DIR.parent
 sys.path.insert(0, str(APP_DIR))
 

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <title>{% block title %}The Quest Hotel - Luxury Experience{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <!-- Mobile App Top Bar -->
+  <header class="app-header">
+    <a href="{{ url_for('index') }}" class="brand-wrapper">
+      <img src="{{ url_for('assets', filename='imgs/logo/logo.png') }}" alt="The Quest Logo" class="brand-logo">
+      <div class="brand-text">
+        <h1>THE QUEST</h1>
+        <small>Luxury Hotel & Suites</small>
+      </div>
+    </a>
+
+    <div class="header-actions">
+      {% if current_user %}
+        <a href="{{ url_for('profile_view') }}" class="header-user-badge">
+          {% if current_user.image_path %}
+            <img src="{{ url_for('serve_shared_assets', filename=current_user.image_path.replace('assets/', '')) }}" alt="Avatar" class="header-user-avatar">
+          {% else %}
+            <span>👤</span>
+          {% endif %}
+          <span>{{ current_user.name.split(' ')[0] }}</span>
+        </a>
+      {% else %}
+        <a href="{{ url_for('login_view') }}" class="btn btn-accent" style="padding: 6px 12px; font-size: 0.8rem;">
+          Sign In
+        </a>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- Global Toast Notification Container -->
+  <div id="mobileToast" class="mobile-toast"></div>
+
+  <!-- Main Content View -->
+  <main class="app-container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="bottom-nav">
+    <a href="{{ url_for('index') }}" class="nav-item {% if request.path == url_for('index') %}active{% endif %}">
+      <span class="icon">🏠</span>
+      <span>Home</span>
+    </a>
+
+    <a href="{{ url_for('rooms_view') }}" class="nav-item {% if request.path == url_for('rooms_view') %}active{% endif %}">
+      <span class="icon">🛏️</span>
+      <span>{% if is_checked_in %}Extend{% else %}Suites{% endif %}</span>
+    </a>
+
+    <a href="{{ url_for('key_view') }}" class="nav-item {% if request.path == url_for('key_view') %}active{% endif %}">
+      <span class="icon">🔑</span>
+      <span>Room Key</span>
+      {% if is_checked_in %}
+        <span class="badge-dot"></span>
+      {% endif %}
+    </a>
+
+    <a href="{{ url_for('services_view') }}" class="nav-item {% if request.path == url_for('services_view') %}active{% endif %}">
+      <span class="icon">🛎️</span>
+      <span>Services</span>
+    </a>
+
+    <a href="{{ url_for('profile_view') }}" class="nav-item {% if request.path == url_for('profile_view') %}active{% endif %}">
+      <span class="icon">👤</span>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="{{ url_for('static', filename='mobile.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+

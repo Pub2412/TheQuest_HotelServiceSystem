@@ -4,10 +4,22 @@ import sqlite3
 import time
 from pathlib import Path
 
-from flask import Flask, redirect, render_template, request, send_from_directory, session, url_for
+from flask import Flask, jsonify, redirect, render_template, request, send_from_directory, session, url_for
 
 
-APP_DIR = Path(__file__).resolve().parent
+import os
+import sys
+
+APP_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_ROOT = APP_DIR.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from database.key_service import (
+    init_key_system, get_daily_super_key, rotate_daily_super_key,
+    mint_room_key, revoke_room_key, verify_door_access,
+    get_all_rooms_door_status, set_door_state, get_door_access_logs, STAFF_WIFI_SSID
+)
 PROJECT_ROOT = APP_DIR.parent
 DATABASE_PATH = PROJECT_ROOT / "database" / "hotel_service.db"
 
@@ -36,6 +48,7 @@ def ensure_call_schema():
 
 
 ensure_call_schema()
+init_key_system()
 
 
 def verify_password(password, stored_hash):
@@ -385,6 +398,28 @@ def update_reservation_status(reservation_id):
             "UPDATE reservations SET status = ? WHERE id = ?",
             (new_status, reservation_id),
         )
+        res = connection.execute(
+            "SELECT customer_id, room_id FROM reservations WHERE id = ?", (reservation_id,)
+        ).fetchone()
+        if new_status == "Checked In" and res:
+            connection.execute(
+                "UPDATE rooms SET status = 'Occupied', is_occupied = 1, is_reserved = 0 WHERE id = ?",
+                (res["room_id"],)
+            )
+            mint_room_key(res["room_id"], res["customer_id"], reservation_id)
+        elif new_status == "Checked Out" and res:
+            connection.execute(
+                "UPDATE rooms SET status = 'Needs Service', is_occupied = 0, is_reserved = 0 WHERE id = ?",
+                (res["room_id"],)
+            )
+            revoke_room_key(res["room_id"], reservation_id)
+        elif new_status == "Canceled" and res:
+            connection.execute(
+                "UPDATE rooms SET status = 'Vacant', is_occupied = 0, is_reserved = 0 WHERE id = ?",
+                (res["room_id"],)
+            )
+            revoke_room_key(res["room_id"], reservation_id
+        )
         connection.commit()
     return redirect(url_for("cashier_reservations"))
 
@@ -511,6 +546,12 @@ def calls():
                 "SELECT id FROM users WHERE id = ? AND is_active = 1", (receiver_id,)
             ).fetchone()
             if receiver:
+                # Cancel any previous active or ringing calls by this caller
+                connection.execute(
+                    "UPDATE calls SET status = 'ended', ended_at = CURRENT_TIMESTAMP "
+                    "WHERE caller_id = ? AND status IN ('ringing', 'answered')",
+                    (user_id,),
+                )
                 connection.execute(
                     "INSERT INTO calls (caller_id, receiver_id) VALUES (?, ?)",
                     (user_id, receiver_id),
@@ -526,7 +567,7 @@ def calls():
             "JOIN users u ON u.id = CASE WHEN c.receiver_id = ? THEN c.caller_id ELSE c.receiver_id END "
             "WHERE (c.receiver_id = ? OR c.caller_id = ?) "
             "AND c.status IN ('ringing', 'answered') "
-            "ORDER BY c.created_at DESC LIMIT 1",
+            "ORDER BY c.id DESC LIMIT 1",
             (user_id, user_id, user_id, user_id),
         ).fetchone()
     return {"call": dict(incoming) if incoming else None}
@@ -632,6 +673,79 @@ def staff_section(section):
         [("Dashboard", "dashboard"), ("Bulletin", "bulletin"), ("Inbox", "inbox")],
         form,
     )
+
+
+@app.route("/keys", methods=["GET", "POST"])
+@login_required
+def doors_page():
+    super_key = get_daily_super_key()
+    rooms = get_all_rooms_door_status()
+    logs = get_door_access_logs(limit=25)
+    return render_template(
+        "doors.html",
+        super_key=super_key,
+        rooms=rooms,
+        logs=logs,
+        staff_wifi=STAFF_WIFI_SSID,
+    )
+
+
+@app.post("/api/keys/rotate")
+@login_required
+def api_rotate_super_key():
+    new_sk = rotate_daily_super_key()
+    return jsonify({"success": True, "super_key": new_sk})
+
+
+@app.post("/api/door/unlock")
+@login_required
+def api_unlock_door():
+    data = request.get_json() or {}
+    room_id = int(data.get("room_id", 0))
+    key_token = data.get("key_token", "").strip()
+    method = data.get("method", "wifi").lower()
+    wifi_ssid = data.get("wifi_ssid", "").strip()
+    user = session.get("user", {})
+
+    granted, message, details = verify_door_access(
+        room_id=room_id,
+        key_token=key_token,
+        method=method,
+        wifi_ssid=wifi_ssid,
+        user_type="staff",
+        user_id=user.get("id"),
+        user_name=user.get("name"),
+    )
+    return jsonify({
+        "success": granted,
+        "message": message,
+        "details": details,
+    }), (200 if granted else 400)
+
+
+@app.post("/api/door/lock")
+@login_required
+def api_lock_door():
+    data = request.get_json() or {}
+    room_id = int(data.get("room_id", 0))
+    user = session.get("user", {})
+    ok = set_door_state(
+        room_id, "locked", actor=f"{user.get('name')} ({user.get('role')})"
+    )
+    return jsonify({"success": ok})
+
+
+@app.get("/api/door/status")
+@login_required
+def api_door_status():
+    rooms = get_all_rooms_door_status()
+    logs = get_door_access_logs(limit=15)
+    sk = get_daily_super_key()
+    return jsonify({
+        "rooms": rooms,
+        "logs": logs,
+        "super_key": sk,
+    })
 
 
 @app.get("/health")

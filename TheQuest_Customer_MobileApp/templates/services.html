@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Dining & Services - The Quest Hotel{% endblock %}
+
+{% block content %}
+<section>
+  <h1 class="section-title">
+    <span>🛎️</span> In-Stay Services & Dining
+  </h1>
+
+  {% if is_checked_in and stay %}
+    <!-- In-Room Dining Menu Section -->
+    <div id="dining" class="card" style="padding: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div>
+          <h2 style="margin: 0; font-size: 1.15rem; color: var(--color-primary-dark);">In-Room Dining Menu</h2>
+          <small style="color: var(--color-text-muted);">Delivered fresh to Suite {{ stay.room_number }}</small>
+        </div>
+        <button class="btn btn-accent" onclick="openModal('cartModal')" style="padding: 6px 12px; font-size: 0.8rem;">
+          🛒 Cart (<span id="cartCount">0</span>)
+        </button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        {% for dish in food_menu %}
+          <div style="display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--color-border); align-items: center;">
+            {% if dish.picture_link %}
+              <img src="{{ url_for('serve_shared_assets', filename=dish.picture_link.replace('assets/', '')) }}" alt="{{ dish.name }}" style="width: 64px; height: 64px; border-radius: 8px; object-fit: cover;">
+            {% else %}
+              <div style="width: 64px; height: 64px; border-radius: 8px; background: #EDE9FE; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🍽️</div>
+            {% endif %}
+            <div style="flex: 1;">
+              <div style="font-weight: 700; color: var(--color-text-dark); font-size: 0.95rem;">{{ dish.name }}</div>
+              <small style="color: var(--color-text-muted); display: block; font-size: 0.75rem;">{{ dish.category }} • {{ dish.description or "" }}</small>
+              <div style="color: var(--color-primary); font-weight: 800; font-size: 0.95rem; margin-top: 2px;">₱{{ "{:,.2f}".format(dish.price) }}</div>
+            </div>
+            <div>
+              <button class="btn btn-secondary" onclick="addToCart({{ dish.id }}, '{{ dish.name }}', {{ dish.price }})" style="padding: 6px 10px; font-size: 0.8rem;">
+                + Add
+              </button>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Hotel Services Booking Section -->
+    <div id="services" class="card" style="margin-top: 14px;">
+      <h2 style="margin: 0 0 4px; font-size: 1.15rem; color: var(--color-primary-dark);">Hotel Amenities & Services</h2>
+      <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0 0 12px;">
+        Book signature wellness, housekeeping, and executive transport.
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        {% for svc in hotel_services %}
+          <div style="border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 700; color: var(--color-primary-dark); font-size: 0.95rem;">{{ svc.name }}</div>
+              <small style="color: var(--color-text-muted); display: block;">{{ svc.description or "Premium hotel service." }}</small>
+              <span style="font-weight: 800; color: var(--color-accent-text); font-size: 0.9rem;">₱{{ "{:,.2f}".format(svc.price) }}</span>
+            </div>
+            <button class="btn btn-primary" onclick="openServiceModal({{ svc.id }}, '{{ svc.name }}', {{ svc.price }})" style="padding: 6px 12px; font-size: 0.8rem;">
+              Book
+            </button>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- The Ridiculous Request Oath Form -->
+    <div class="card" style="background: linear-gradient(135deg, #23073D, #3B185F); color: #FFFFFF; border: 1.5px solid var(--color-accent); margin-top: 14px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+        <span style="font-size: 1.5rem;">👑</span>
+        <h2 style="margin: 0; font-size: 1.15rem; color: #FFFFFF;">The Ridiculous Request Oath</h2>
+      </div>
+      <p style="font-size: 0.82rem; color: var(--color-accent-light); margin: 0 0 12px; font-style: italic;">
+        "We shall never deny a guest, even the most ridiculous request"
+      </p>
+
+      <form onsubmit="handleRidiculousSubmit(event)">
+        <div class="form-group">
+          <textarea id="ridiculousText" class="textarea" rows="3" placeholder="Craving 200 purple rubber ducks, midnight harp performance, or imported wagyu at 3 AM? We are at your command." style="background: rgba(255,255,255,0.95);"></textarea>
+        </div>
+        <button type="submit" class="btn btn-accent btn-block">
+          Submit to Executive Concierge
+        </button>
+      </form>
+    </div>
+
+  {% else %}
+    <!-- Locked In-Stay Notice -->
+    <div class="card" style="text-align: center; padding: 30px 16px;">
+      <span style="font-size: 3.5rem; display: block; margin-bottom: 10px;">🛎️</span>
+      <h2 style="margin: 0 0 8px; color: var(--color-primary-dark); font-size: 1.25rem;">Exclusive In-Stay Privilege</h2>
+      <p style="font-size: 0.88rem; color: var(--color-text-muted); margin: 0 0 16px;">
+        In-room gourmet dining, spa bookings, and bespoke concierge requests are exclusively available to currently checked-in hotel guests.
+      </p>
+      {% if current_user %}
+        <a href="{{ url_for('rooms_view') }}" class="btn btn-primary">
+          Check In / Reserve a Suite
+        </a>
+      {% else %}
+        <a href="{{ url_for('login_view') }}" class="btn btn-primary">
+          Sign In to Your Account
+        </a>
+      {% endif %}
+    </div>
+  {% endif %}
+</section>
+
+<!-- In-Room Dining Cart Modal -->
+<div id="cartModal" class="mobile-modal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h3 class="modal-title">In-Room Dining Cart</h3>
+      <button class="modal-close" onclick="closeModal('cartModal')">✕</button>
+    </div>
+    <div id="cartItemsList" style="max-height: 220px; overflow-y: auto; margin-bottom: 14px;">
+      <!-- Populated via JS -->
+    </div>
+    <div class="form-group">
+      <label class="form-label">Delivery Time:</label>
+      <select id="cartDeliveryTime" class="select">
+        <option value="As soon as ready (approx. 25-35 mins)">As soon as ready (~25-35 mins)</option>
+        <option value="In 45 minutes">In 45 minutes</option>
+        <option value="In 1 hour">In 1 hour</option>
+        <option value="This Evening (7:00 PM)">This Evening (7:00 PM)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Chef Notes / Dietary Requests:</label>
+      <input type="text" id="cartNotes" class="input" placeholder="e.g. Extra cutlery, sauce on the side">
+    </div>
+    <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 1.1rem; margin: 12px 0; color: var(--color-primary-dark);">
+      <span>Total:</span>
+      <span id="cartTotalPrice">₱0.00</span>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="submitDiningOrder()">
+      Place Order to Suite {{ stay.room_number if stay else '' }}
+    </button>
+  </div>
+</div>
+
+<!-- Hotel Service Booking Modal -->
+<div id="serviceModal" class="mobile-modal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h3 id="svcModalTitle" class="modal-title">Book Service</h3>
+      <button class="modal-close" onclick="closeModal('serviceModal')">✕</button>
+    </div>
+    <form onsubmit="submitServiceBooking(event)">
+      <input type="hidden" id="svcId">
+      <div class="form-group">
+        <label class="form-label">Preferred Time:</label>
+        <select id="svcTime" class="select">
+          <option value="Today - Afternoon (2:00 PM - 5:00 PM)">Today - Afternoon (2:00 PM - 5:00 PM)</option>
+          <option value="Today - Evening (6:00 PM - 9:00 PM)">Today - Evening (6:00 PM - 9:00 PM)</option>
+          <option value="Tomorrow - Morning (8:00 AM - 11:00 AM)">Tomorrow - Morning (8:00 AM - 11:00 AM)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Special Notes:</label>
+        <input type="text" id="svcNotes" class="input" placeholder="e.g. Deep tissue focus, extra lavender oil">
+      </div>
+      <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 1.1rem; margin: 12px 0; color: var(--color-primary-dark);">
+        <span>Price:</span>
+        <span id="svcPriceDisplay">₱0.00</span>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Confirm Service Booking</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  let cart = [];
+
+  function addToCart(id, name, price) {
+    const existing = cart.find(item => item.id === id);
+    if (existing) {
+      existing.quantity++;
+    } else {
+      cart.push({ id, name, price, quantity: 1 });
+    }
+    updateCartDisplay();
+    showToast(`Added ${name} to cart!`, true);
+  }
+
+  function updateCartDisplay() {
+    const countEl = document.getElementById("cartCount");
+    const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+    if (countEl) countEl.innerText = totalCount;
+
+    const list = document.getElementById("cartItemsList");
+    if (!list) return;
+
+    if (cart.length === 0) {
+      list.innerHTML = "<p style='color: var(--color-text-muted); font-size: 0.85rem;'>Your cart is empty.</p>";
+      document.getElementById("cartTotalPrice").innerText = "₱0.00";
+      return;
+    }
+
+    let html = "";
+    let total = 0;
+    cart.forEach((item, index) => {
+      const subtotal = item.price * item.quantity;
+      total += subtotal;
+      html += `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--color-border); font-size: 0.85rem;">
+          <div>
+            <b>${item.name}</b>
+            <div style="font-size: 0.75rem; color: var(--color-text-muted);">₱${item.price.toLocaleString()} each</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <button onclick="cart[${index}].quantity--; if(cart[${index}].quantity<=0) cart.splice(${index},1); updateCartDisplay();" style="padding: 2px 8px; border: 1px solid var(--color-border); background: #fff; border-radius: 4px;">-</button>
+            <b>${item.quantity}</b>
+            <button onclick="cart[${index}].quantity++; updateCartDisplay();" style="padding: 2px 8px; border: 1px solid var(--color-border); background: #fff; border-radius: 4px;">+</button>
+            <span style="font-weight: 700; margin-left: 8px;">₱${subtotal.toLocaleString()}</span>
+          </div>
+        </div>
+      `;
+    });
+    list.innerHTML = html;
+    document.getElementById("cartTotalPrice").innerText = "₱" + total.toLocaleString('en-US', {minimumFractionDigits: 2});
+  }
+
+  async function submitDiningOrder() {
+    if (cart.length === 0) {
+      showToast("Cart is empty.", false);
+      return;
+    }
+    const delivery = document.getElementById("cartDeliveryTime").value;
+    const notes = document.getElementById("cartNotes").value;
+
+    try {
+      const res = await fetch("/api/services/order-food", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: cart, delivery_time: delivery, notes: notes })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, true);
+        cart = [];
+        updateCartDisplay();
+        closeModal("cartModal");
+      } else {
+        showToast(data.message, false);
+      }
+    } catch (e) {
+      showToast("Order failed: " + e, false);
+    }
+  }
+
+  function openServiceModal(id, name, price) {
+    document.getElementById("svcId").value = id;
+    document.getElementById("svcModalTitle").innerText = "Book " + name;
+    document.getElementById("svcPriceDisplay").innerText = "₱" + price.toLocaleString('en-US', {minimumFractionDigits: 2});
+    openModal("serviceModal");
+  }
+
+  async function submitServiceBooking(e) {
+    e.preventDefault();
+    const id = document.getElementById("svcId").value;
+    const time = document.getElementById("svcTime").value;
+    const notes = document.getElementById("svcNotes").value;
+
+    try {
+      const res = await fetch("/api/services/book-service", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ service_id: id, scheduled_time: time, notes: notes })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, true);
+        closeModal("serviceModal");
+      } else {
+        showToast(data.message, false);
+      }
+    } catch (e) {
+      showToast("Booking failed: " + e, false);
+    }
+  }
+
+  async function handleRidiculousSubmit(e) {
+    e.preventDefault();
+    const text = document.getElementById("ridiculousText").value;
+    try {
+      const res = await fetch("/api/services/ridiculous-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ request_text: text })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, true);
+        document.getElementById("ridiculousText").value = "";
+      } else {
+        showToast(data.message, false);
+      }
+    } catch (e) {
+      showToast("Request failed: " + e, false);
+    }
+  }
+</script>
+{% endblock %}
+

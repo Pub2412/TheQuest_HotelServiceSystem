@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Loyalty Rewards - The Quest Hotel{% endblock %}
+
+{% block content %}
+<section>
+  <h1 class="section-title">
+    <span>🎁</span> Loyalty Rewards & Vouchers
+  </h1>
+
+  <!-- Points & VIP Tier Status Card -->
+  <div class="card" style="background: linear-gradient(135deg, #23073D, #3B185F); color: #FFFFFF; border: 1.5px solid var(--color-accent); text-align: center; padding: 22px 16px;">
+    <span style="font-size: 0.8rem; text-transform: uppercase; color: var(--color-accent-light); font-weight: 700; letter-spacing: 0.5px;">
+      Royal Loyalty Balance
+    </span>
+    <div style="font-size: 2.8rem; font-weight: 900; color: #FCD34D; line-height: 1.1; margin: 4px 0;">
+      {{ current_user.loyalty_points if current_user else 0 }}
+      <span style="font-size: 1.2rem; font-weight: 600; color: #FFFFFF;">PTS</span>
+    </div>
+    
+    {% set pts = current_user.loyalty_points if current_user else 0 %}
+    {% if pts >= 1000 %}
+      <span style="background: #E0E7FF; color: #3730A3; font-weight: 800; font-size: 0.78rem; padding: 3px 12px; border-radius: var(--radius-full);">
+        👑 Imperial Platinum VIP
+      </span>
+    {% elif pts >= 500 %}
+      <span style="background: #FEF3C7; color: #92400E; font-weight: 800; font-size: 0.78rem; padding: 3px 12px; border-radius: var(--radius-full);">
+        🥇 Gold Member VIP
+      </span>
+    {% elif pts >= 200 %}
+      <span style="background: #F1F5F9; color: #475569; font-weight: 800; font-size: 0.78rem; padding: 3px 12px; border-radius: var(--radius-full);">
+        🥈 Silver Member
+      </span>
+    {% else %}
+      <span style="background: #FFEDD5; color: #9A3412; font-weight: 800; font-size: 0.78rem; padding: 3px 12px; border-radius: var(--radius-full);">
+        🥉 Bronze Member
+      </span>
+    {% endif %}
+
+    <p style="font-size: 0.8rem; color: rgba(255,255,255,0.85); margin: 10px 0 0;">
+      Earn 1 point for every ₱100 spent on bookings, dining, and spa treatments.
+    </p>
+  </div>
+
+  <!-- Active Vouchers Section -->
+  {% if vouchers %}
+    <div class="card">
+      <h3 style="margin: 0 0 10px; font-size: 1.05rem; color: var(--color-primary-dark);">
+        <span>🎟️</span> My Redeemed Vouchers
+      </h3>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        {% for v in vouchers %}
+          <div style="background: var(--color-bg); border: 1.5px dashed var(--color-accent); border-radius: var(--radius-md); padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <b style="color: var(--color-primary-dark); font-size: 0.95rem;">{{ v.reward_name }}</b>
+              <div style="font-family: monospace; font-size: 0.85rem; font-weight: 700; color: var(--color-accent-text); margin-top: 2px;">
+                {{ v.voucher_code }}
+              </div>
+              <small style="color: var(--color-text-muted); font-size: 0.72rem;">Spent: {{ v.points_spent }} pts</small>
+            </div>
+            <span style="background: #DCFCE7; color: #166534; font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 4px;">
+              {{ v.status }}
+            </span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Redeemable Catalog -->
+  <div class="card">
+    <h3 style="margin: 0 0 12px; font-size: 1.1rem; color: var(--color-primary-dark);">
+      <span>🎁</span> Redeem Points Catalog
+    </h3>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      {% for rew in rewards %}
+        <div style="border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <div style="flex: 1; padding-right: 8px;">
+            <div style="font-weight: 700; color: var(--color-primary-dark); font-size: 0.95rem;">{{ rew.reward_name }}</div>
+            <small style="color: var(--color-text-muted); display: block;">{{ rew.description }}</small>
+            <span style="display: inline-block; margin-top: 4px; font-weight: 800; color: var(--color-accent-text); font-size: 0.88rem;">
+              {{ rew.points_required }} Points
+            </span>
+          </div>
+          <div>
+            {% if current_user and current_user.loyalty_points >= rew.points_required %}
+              <button class="btn btn-accent" onclick="redeemReward({{ rew.id }}, '{{ rew.reward_name }}', {{ rew.points_required }})" style="padding: 6px 12px; font-size: 0.8rem;">
+                Redeem
+              </button>
+            {% else %}
+              <button class="btn btn-secondary" disabled style="padding: 6px 12px; font-size: 0.8rem; opacity: 0.6;">
+                {{ rew.points_required }} pts
+              </button>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  async function redeemReward(id, name, cost) {
+    if (!confirm(`Redeem "${name}" for ${cost} loyalty points?`)) return;
+
+    try {
+      const res = await fetch("/api/rewards/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reward_id: id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, true);
+        setTimeout(() => { location.reload(); }, 1800);
+      } else {
+        showToast(data.message, false);
+      }
+    } catch (e) {
+      showToast("Redemption failed: " + e, false);
+    }
+  }
+</script>
+{% endblock %}
+
