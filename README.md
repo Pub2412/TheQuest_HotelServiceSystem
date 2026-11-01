@@ -1,11 +1,5 @@
 # The Quest Hotel Service System
 
-## Authors
-
-- Pub - Lance Grant E. Haboc
-- stix - John Sherwin E. Padilla
-
-
 The Quest is a Python-based hotel management system with shared SQLite data and
 three client applications:
 
@@ -18,6 +12,10 @@ three client applications:
 The project also includes a smart-lock simulator in `gui.py` for testing room
 key access and door state synchronization.
 
+## Authors
+
+- Pub - Lance Grant E. Haboc
+- stix - John Sherwin E. Padilla
 
 ## Project structure
 
