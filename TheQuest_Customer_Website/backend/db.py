@@ -7,28 +7,18 @@ import os
 import sqlite3
 from pathlib import Path
 from datetime import datetime, timedelta
+import sys
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+from database_path import get_database_path as resolve_database_path
 
 def get_database_path() -> Path:
-    """Dynamically resolve the path to hotel_service.db regardless of where the app is launched."""
-    # Strategy 1: Relative to this file (backend/db.py -> TheQuest_Customer_Website -> FinalProject_Hotel_Service -> database)
-    candidate1 = Path(__file__).resolve().parents[2] / "database" / "hotel_service.db"
-    if candidate1.exists():
-        return candidate1
+    """Return the shared writable database used by all hotel applications."""
+    return resolve_database_path()
 
-    # Strategy 2: Relative to current working directory
-    cwd = Path.cwd()
-    candidate2 = cwd / "database" / "hotel_service.db"
-    if candidate2.exists():
-        return candidate2
-
-    candidate3 = cwd.parent / "database" / "hotel_service.db"
-    if candidate3.exists():
-        return candidate3
-
-    # Fallback to candidate1 path (creates if setup_db is run)
-    return candidate1
-
-DB_PATH = get_database_path()
+DB_PATH = resolve_database_path()
 
 def get_connection():
     """Create and return a SQLite connection with Row factory."""

@@ -3,7 +3,9 @@
 This port uses the recommended deployment model:
 
 1. Flask runs on the development computer and uses the shared
-   `database/hotel_service.db`.
+   the shared SQLite database at
+   `{commonappdata}\The Quest Hotel\database\hotel_service.db` in installed
+   builds, or `database/hotel_service.db` during development.
 2. The Android APK is a small WebView client.
 3. The launcher detects an authorized emulator or USB-debugged phone, runs
    `adb reverse tcp:5000 tcp:5000`, builds the APK, installs it, and launches

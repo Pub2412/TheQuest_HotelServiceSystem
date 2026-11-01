@@ -103,5 +103,7 @@ All seeded customer accounts share the default test password: **`Password123!`**
 ---
 
 ## 📂 Portable Database Architecture
-* The website connects directly to `database/hotel_service.db` using relative path traversal (`Path(__file__).resolve().parents[2] / 'database' / 'hotel_service.db'`).
+* The website uses the shared database resolver. Installed builds use
+  `{commonappdata}\The Quest Hotel\database\hotel_service.db`; source runs
+  fall back to `database/hotel_service.db`.
 * **Zero Absolute Paths:** The website will run flawlessly on any other computer or drive letter without path errors!

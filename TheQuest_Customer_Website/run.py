@@ -14,6 +14,8 @@ from pathlib import Path
 CURRENT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = CURRENT_DIR.parent
 sys.path.insert(0, str(CURRENT_DIR))
+sys.path.insert(0, str(PROJECT_ROOT))
+from database_path import get_database_path
 
 def open_browser():
     """Wait for server to bind then launch the web browser."""
@@ -42,15 +44,14 @@ def check_environment():
         print("    pip install -r requirements.txt")
         sys.exit(1)
 
-    db_file = PROJECT_ROOT / "database" / "hotel_service.db"
+    db_file = get_database_path()
     if db_file.exists():
         print(f"[OK] SQLite Database located: {db_file}")
     else:
         print(f"[WARN] Database file not found at {db_file}")
         print("[INFO] Attempting to initialize database from setup_db...")
         try:
-            sys.path.insert(0, str(PROJECT_ROOT / "database"))
-            from setup_db import create_database
+            from database.setup_db import create_database
             create_database()
             print("[OK] Database successfully initialized.")
         except Exception as e:

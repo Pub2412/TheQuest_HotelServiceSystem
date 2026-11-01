@@ -20,8 +20,9 @@ from database.key_service import (
     mint_room_key, revoke_room_key, verify_door_access,
     get_all_rooms_door_status, set_door_state, get_door_access_logs, STAFF_WIFI_SSID
 )
+from database_path import get_database_path
 PROJECT_ROOT = APP_DIR.parent
-DATABASE_PATH = PROJECT_ROOT / "database" / "hotel_service.db"
+DATABASE_PATH = get_database_path()
 
 app = Flask(__name__)
 app.secret_key = "the-quest-mobile-development-key"

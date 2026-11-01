@@ -30,3 +30,5 @@ local.properties
 # Operating system
 .DS_Store
 Thumbs.db
+
+/documentation/INNO_SETUP_INSTALLER_GUIDE.txt
