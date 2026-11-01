@@ -7,6 +7,7 @@ Slogan: "We shall never deny a guest, even the most ridiculous request"
 
 import tkinter as tk
 import sys
+import ctypes
 from pathlib import Path
 
 # Add project root to sys.path
@@ -45,6 +46,18 @@ from pages.StaffPage import StaffPage
 from pages.ForbiddenPage import ForbiddenPage
 
 
+def set_windows_app_identity():
+    """Use the Quest identity for Windows taskbar grouping and icon lookup."""
+    if sys.platform != "win32":
+        return
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            "TheQuest.HotelManagementSystem"
+        )
+    except (AttributeError, OSError):
+        pass
+
+
 class HotelApp(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -54,8 +67,11 @@ class HotelApp(tk.Tk):
         self.minsize(1080, 680)
         self.configure(bg=COLOR_BG)
 
-        # Set window icon
+        # Set the branded icon used by the title bar and taskbar.
         try:
+            icon_path = PROJECT_ROOT / "assets" / "imgs" / "logo" / "logo.ico"
+            if icon_path.exists():
+                self.iconbitmap(default=str(icon_path))
             icon_img = get_icon_logo((32, 32))
             self.iconphoto(True, icon_img)
         except Exception:
@@ -175,6 +191,7 @@ class HotelApp(tk.Tk):
 
 
 if __name__ == "__main__":
+    set_windows_app_identity()
     # Ensure database schema is initialized and seeded if empty
     initialize_database()
 

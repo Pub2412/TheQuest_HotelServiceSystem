@@ -418,6 +418,9 @@ def extend_reservation(customer_id: int, additional_days: int, payment_method: s
     except Exception:
         current_co = datetime.now().date()
 
+    # An overdue checked-in stay must be extended from today, not from its
+    # already-expired checkout date.
+    current_co = max(current_co, datetime.now().date())
     new_co = current_co + timedelta(days=additional_days)
     new_co_str = new_co.strftime("%Y-%m-%d")
 
@@ -723,4 +726,3 @@ def get_inquiries_history(customer_id: int) -> List[Dict]:
     rows = c.fetchall()
     conn.close()
     return [dict(r) for r in rows]
-

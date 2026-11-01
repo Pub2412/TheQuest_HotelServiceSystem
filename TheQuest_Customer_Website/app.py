@@ -275,9 +275,7 @@ def api_forgot_password():
 def api_logout():
     """Log out current customer session."""
     session.clear()
-    if request.method == "GET":
-        return redirect(url_for("index"))
-    return jsonify({"success": True, "message": "Logged out successfully."})
+    return redirect(url_for("index"))
 
 @app.route("/api/me")
 def api_me():

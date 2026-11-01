@@ -344,9 +344,7 @@ def api_forgot_password():
 def api_logout():
     """Log out customer session."""
     session.clear()
-    if request.method == "GET":
-        return redirect(url_for("index"))
-    return jsonify({"success": True, "message": "Logged out successfully."})
+    return redirect(url_for("index"))
 
 
 @app.route("/api/me")
@@ -536,7 +534,18 @@ def api_extend_reservation():
         return jsonify({"success": False, "message": "Please log in to extend stay."}), 401
 
     data = request.get_json() or {}
-    additional_days = int(data.get("additional_days", 1))
+    try:
+        additional_days = int(data.get("additional_days", 1))
+    except (TypeError, ValueError):
+        return jsonify({
+            "success": False,
+            "message": "Additional nights must be a whole number."
+        }), 400
+    if not 1 <= additional_days <= 14:
+        return jsonify({
+            "success": False,
+            "message": "Additional nights must be between 1 and 14."
+        }), 400
     payment_method = data.get("payment_method", "Credit Card")
 
     success, msg = extend_reservation(customer_id, additional_days, payment_method)

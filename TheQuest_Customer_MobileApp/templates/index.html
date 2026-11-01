@@ -169,7 +169,7 @@
   <div style="display: flex; flex-direction: column; gap: 12px;">
     {% for r in featured_rooms %}
       <div class="card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-        <img src="{{ url_for('serve_shared_assets', filename=r.image.replace('assets/', '')) }}" alt="{{ r.type }}" style="width: 100%; height: 160px; object-fit: cover;">
+        <img src="{{ url_for('serve_shared_assets', filename=r.image.replace('assets/', '')) }}" alt="{{ r.type }}" loading="lazy" decoding="async" style="width: 100%; height: 160px; object-fit: cover;">
         <div style="padding: 12px 14px;">
           <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
@@ -199,8 +199,7 @@
 {% block extra_scripts %}
 {% if is_checked_in and active_stay and active_stay.countdown %}
 <script>
-  initCountdown("{{ active_stay.countdown.target_iso }}");
+  initCountdown({{ active_stay.countdown.target_iso|tojson }});
 </script>
 {% endif %}
 {% endblock %}
-

@@ -36,42 +36,6 @@
     </div>
   </div>
 
-  <!-- Connected Social Accounts -->
-  <div class="card">
-    <h3 style="margin: 0 0 10px; font-size: 1.05rem; color: var(--color-primary-dark);">
-      <span>🔗</span> Connected Social Accounts
-    </h3>
-    <div style="display: flex; flex-direction: column; gap: 10px;">
-      <!-- Google -->
-      <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--color-border);">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-weight: 800; color: #EA4335; font-size: 1.1rem;">G</span>
-          <div>
-            <b>Google Account</b>
-            <small style="display: block; color: var(--color-text-muted);">{{ "Connected" if customer.google_id else "Not connected" }}</small>
-          </div>
-        </div>
-        <button class="btn {{ 'btn-secondary' if customer.google_id else 'btn-primary' }}" style="padding: 4px 10px; font-size: 0.75rem;" onclick="toggleSocial('Google', '{{ 'disconnect' if customer.google_id else 'connect' }}')">
-          {{ "Disconnect" if customer.google_id else "Connect" }}
-        </button>
-      </div>
-
-      <!-- Facebook -->
-      <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-weight: 800; color: #1877F2; font-size: 1.1rem;">f</span>
-          <div>
-            <b>Facebook Account</b>
-            <small style="display: block; color: var(--color-text-muted);">{{ "Connected" if customer.facebook_id else "Not connected" }}</small>
-          </div>
-        </div>
-        <button class="btn {{ 'btn-secondary' if customer.facebook_id else 'btn-primary' }}" style="padding: 4px 10px; font-size: 0.75rem;" onclick="toggleSocial('Facebook', '{{ 'disconnect' if customer.facebook_id else 'connect' }}')">
-          {{ "Disconnect" if customer.facebook_id else "Connect" }}
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- Reservation History -->
   <div class="card">
     <h3 style="margin: 0 0 10px; font-size: 1.05rem; color: var(--color-primary-dark);">
@@ -179,23 +143,6 @@
     }
   }
 
-  async function toggleSocial(provider, action) {
-    try {
-      const res = await fetch("/api/profile/connect-social", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: provider, action: action })
-      });
-      const data = await res.json();
-      showToast(data.message, data.success);
-      if (data.success) {
-        setTimeout(() => { location.reload(); }, 1000);
-      }
-    } catch (e) {
-      showToast("Action failed: " + e, false);
-    }
-  }
-
   async function handleDeleteAccount() {
     if (!confirm("Are you sure you want to deactivate your guest account? This action cannot be undone.")) return;
     try {
@@ -213,4 +160,3 @@
   }
 </script>
 {% endblock %}
-

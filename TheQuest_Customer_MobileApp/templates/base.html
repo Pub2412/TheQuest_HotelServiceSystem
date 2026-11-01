@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
   <title>{% block title %}The Quest Hotel - Luxury Experience{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}?v=20261101-3">
   {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -46,17 +46,17 @@
 
   <!-- Mobile Bottom Navigation Bar -->
   <nav class="bottom-nav">
-    <a href="{{ url_for('index') }}" class="nav-item {% if request.path == url_for('index') %}active{% endif %}">
+    <a href="{{ url_for('index') }}" onclick="return navigateTab(this)" class="nav-item {% if request.path == url_for('index') %}active{% endif %}">
       <span class="icon">🏠</span>
       <span>Home</span>
     </a>
 
-    <a href="{{ url_for('rooms_view') }}" class="nav-item {% if request.path == url_for('rooms_view') %}active{% endif %}">
+    <a href="{{ url_for('rooms_view') }}" onclick="return navigateTab(this)" class="nav-item {% if request.path == url_for('rooms_view') %}active{% endif %}">
       <span class="icon">🛏️</span>
       <span>{% if is_checked_in %}Extend{% else %}Suites{% endif %}</span>
     </a>
 
-    <a href="{{ url_for('key_view') }}" class="nav-item {% if request.path == url_for('key_view') %}active{% endif %}">
+    <a href="{{ url_for('key_view') }}" onclick="return navigateTab(this)" class="nav-item {% if request.path == url_for('key_view') %}active{% endif %}">
       <span class="icon">🔑</span>
       <span>Room Key</span>
       {% if is_checked_in %}
@@ -64,19 +64,18 @@
       {% endif %}
     </a>
 
-    <a href="{{ url_for('services_view') }}" class="nav-item {% if request.path == url_for('services_view') %}active{% endif %}">
+    <a href="{{ url_for('services_view') }}" onclick="return navigateTab(this)" class="nav-item {% if request.path == url_for('services_view') %}active{% endif %}">
       <span class="icon">🛎️</span>
       <span>Services</span>
     </a>
 
-    <a href="{{ url_for('profile_view') }}" class="nav-item {% if request.path == url_for('profile_view') %}active{% endif %}">
+    <a href="{{ url_for('profile_view') }}" onclick="return navigateTab(this)" class="nav-item {% if request.path == url_for('profile_view') %}active{% endif %}">
       <span class="icon">👤</span>
       <span>Profile</span>
     </a>
   </nav>
 
-  <script src="{{ url_for('static', filename='mobile.js') }}"></script>
+  <script src="{{ url_for('static', filename='mobile.js') }}?v=20261101-3"></script>
   {% block extra_scripts %}{% endblock %}
 </body>
 </html>
-

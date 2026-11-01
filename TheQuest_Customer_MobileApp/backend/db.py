@@ -30,8 +30,9 @@ DB_PATH = get_database_path()
 
 def get_connection():
     """Create and return a SQLite connection with Row factory."""
-    conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
+    conn = sqlite3.connect(str(DB_PATH), timeout=3.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA busy_timeout = 3000")
     return conn
 
 def init_customer_tables():
@@ -183,4 +184,3 @@ def get_active_stay(customer_id: int):
     }
 
     return stay
-

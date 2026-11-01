@@ -270,32 +270,6 @@ function initAuthHandlers() {
     });
   }
 
-  // Social Login Buttons
-  const socialBtns = document.querySelectorAll(".social-login-trigger");
-  socialBtns.forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const provider = btn.dataset.provider;
-      const demoEmail = prompt(`Enter ${provider} email to sign in:`, provider === "Google" ? "amelia.watson@gmail.com" : "diana.prince@outlook.com");
-      if (!demoEmail) return;
-
-      try {
-        const res = await fetch("/api/social-login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ provider, email: demoEmail, name: demoEmail.split("@")[0].replace(".", " ").toUpperCase() })
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast(`Signed In via ${provider}`, data.message, "success");
-          setTimeout(() => window.location.reload(), 1000);
-        } else {
-          showToast("Sign In Failed", data.message, "error");
-        }
-      } catch (err) {
-        showToast("Error", "Social login failed.", "error");
-      }
-    });
-  });
 }
 
 function openAuthModal(defaultTab = "login") {

@@ -51,7 +51,7 @@
           </b>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block">
+        <button type="submit" id="btnConfirmExtension" class="btn btn-primary btn-block">
           Confirm Extension & Settle
         </button>
       </form>
@@ -75,7 +75,7 @@
   <div style="display: flex; flex-direction: column; gap: 14px;">
     {% for r in rooms %}
       <div class="card" style="padding: 0; overflow: hidden;">
-        <img src="{{ url_for('serve_shared_assets', filename=r.image.replace('assets/', '')) }}" alt="{{ r.type }}" style="width: 100%; height: 180px; object-fit: cover;">
+        <img src="{{ url_for('serve_shared_assets', filename=r.image.replace('assets/', '')) }}" alt="{{ r.type }}" loading="lazy" decoding="async" style="width: 100%; height: 180px; object-fit: cover;">
         <div style="padding: 14px;">
           <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
@@ -206,8 +206,18 @@
 
   async function handleExtendStay(e) {
     e.preventDefault();
-    const nights = parseInt(document.getElementById("extNights").value) || 1;
+    const button = document.getElementById("btnConfirmExtension");
+    if (button.disabled) return;
+
+    const nights = parseInt(document.getElementById("extNights").value, 10);
     const payment = document.getElementById("extPayment").value;
+    if (!Number.isInteger(nights) || nights < 1 || nights > 14) {
+      showToast("Choose between 1 and 14 additional nights.", false);
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Processing extension...";
 
     try {
       const res = await fetch("/api/reservations/extend", {
@@ -218,12 +228,20 @@
       const data = await res.json();
       if (data.success) {
         showToast(data.message, true);
-        setTimeout(() => { location.reload(); }, 1800);
+        setTimeout(() => {
+          window.location.replace("{{ url_for('index') }}");
+        }, 800);
       } else {
         showToast(data.message, false);
+        button.disabled = false;
+        button.textContent = "Confirm Extension & Settle";
       }
     } catch (err) {
-      showToast("Extension request failed: " + err, false);
+      showToast(err.name === "AbortError"
+        ? "Extension request timed out. Please try again."
+        : "Extension request failed: " + err, false);
+      button.disabled = false;
+      button.textContent = "Confirm Extension & Settle";
     }
   }
 
@@ -308,4 +326,3 @@
   }
 </script>
 {% endblock %}
-

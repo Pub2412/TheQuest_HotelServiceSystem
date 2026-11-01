@@ -84,28 +84,6 @@
     </button>
   </form>
 
-  <!-- Social One-Click Login -->
-  <div style="margin-top: 24px; text-align: center;">
-    <div style="display: flex; align-items: center; margin-bottom: 14px;">
-      <div style="flex: 1; height: 1px; background: var(--color-border);"></div>
-      <span style="padding: 0 10px; font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase;">Or One-Click Social</span>
-      <div style="flex: 1; height: 1px; background: var(--color-border);"></div>
-    </div>
-
-    <div style="display: flex; gap: 10px;">
-      <button type="button" class="btn btn-secondary" style="flex: 1; font-size: 0.85rem;" onclick="handleSocialAuth('Google')">
-        <span style="font-weight: 700; color: #EA4335;">G</span> Google
-      </button>
-      <button type="button" class="btn btn-secondary" style="flex: 1; font-size: 0.85rem;" onclick="handleSocialAuth('Facebook')">
-        <span style="font-weight: 700; color: #1877F2;">f</span> Facebook
-      </button>
-    </div>
-  </div>
-
-  <!-- Demo Accounts Hint -->
-  <div style="margin-top: 20px; padding: 10px; background: var(--color-bg); border-radius: var(--radius-md); font-size: 0.75rem; color: var(--color-text-muted);">
-    <b>Demo Account:</b> <code>amelia.watson@gmail.com</code> / <code>Password123!</code> (Checked in to Suite 102).
-  </div>
 </div>
 
 <!-- Forgot Password Modal -->
@@ -231,25 +209,6 @@
     }
   }
 
-  async function handleSocialAuth(provider) {
-    try {
-      const res = await fetch("/api/social-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: provider })
-      });
-      const data = await res.json();
-      if (data.success) {
-        showToast(data.message, true);
-        setTimeout(() => { location.href = "{{ url_for('index') }}"; }, 1000);
-      } else {
-        showToast(data.message, false);
-      }
-    } catch (err) {
-      showToast("Social login failed: " + err, false);
-    }
-  }
-
   async function handleForgotSubmit(e) {
     e.preventDefault();
     const id = document.getElementById("forgotIdentifier").value;
@@ -272,4 +231,3 @@
   }
 </script>
 {% endblock %}
-

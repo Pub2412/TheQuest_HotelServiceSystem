@@ -77,7 +77,7 @@ html, body {
   z-index: 100;
   background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
   color: var(--color-white);
-  padding: 10px 16px;
+  padding: calc(14px + env(safe-area-inset-top)) 16px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -162,6 +162,8 @@ html, body {
   justify-content: space-around;
   padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
   box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
+  touch-action: manipulation;
+  pointer-events: auto;
 }
 
 .nav-item {
@@ -175,8 +177,9 @@ html, body {
   gap: 3px;
   padding: 4px 8px;
   border-radius: var(--radius-md);
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
   position: relative;
+  touch-action: manipulation;
 }
 
 .nav-item .icon {
@@ -201,6 +204,11 @@ html, body {
   background: var(--color-accent);
   border-radius: 50%;
   border: 1.5px solid #FFFFFF;
+}
+
+.deferred-service-row {
+  content-visibility: auto;
+  contain-intrinsic-size: 80px;
 }
 
 /* Cards & Shells */
@@ -236,7 +244,7 @@ html, body {
   cursor: pointer;
   border: none;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
   text-align: center;
 }
 
@@ -531,7 +539,7 @@ html, body {
   align-items: center;
   gap: 6px;
   box-shadow: var(--shadow-sm);
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.15s ease;
 }
 
 .quick-action-card:active {
@@ -558,7 +566,7 @@ html, body {
 /* Toast Notifications */
 .mobile-toast {
   position: fixed;
-  top: 60px;
+  top: calc(76px + env(safe-area-inset-top));
   left: 14px;
   right: 14px;
   z-index: 200;
@@ -567,6 +575,7 @@ html, body {
   font-weight: 600;
   font-size: 0.9rem;
   display: none;
+  pointer-events: none;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
   animation: toastSlide 0.3s ease;
 }
@@ -594,10 +603,23 @@ html, body {
   inset: 0;
   z-index: 150;
   background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(4px);
   display: none;
+  pointer-events: none;
   align-items: flex-end;
   justify-content: center;
+}
+
+.mobile-modal[style*="display: flex"] {
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .modal-sheet {
@@ -640,4 +662,3 @@ html, body {
   color: var(--color-text-muted);
   cursor: pointer;
 }
-

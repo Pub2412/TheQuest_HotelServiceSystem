@@ -83,49 +83,6 @@
           </form>
         </div>
 
-        <!-- Connected Social Accounts -->
-        <div style="background: rgba(25, 6, 45, 0.8); border: 1px solid var(--color-card-border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 2rem;">
-          <h3 style="font-family: var(--font-serif); font-size: 1.35rem; color: #fff; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
-            <i class="fa-solid fa-link" style="color: var(--color-gold);"></i> Connected Accounts
-          </h3>
-
-          <!-- Google Account -->
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-              <i class="fa-brands fa-google" style="font-size: 1.4rem; color: #ea4335;"></i>
-              <div>
-                <div style="font-weight: 600; color: #fff;">Google Account</div>
-                <div style="font-size: 0.75rem; color: var(--color-text-subtle);">
-                  {% if customer.google_id %}Connected ({{ customer.google_id }}){% else %}Not connected{% endif %}
-                </div>
-              </div>
-            </div>
-            {% if customer.google_id %}
-              <button class="btn btn-outline-white btn-sm" onclick="toggleSocial('Google', 'disconnect')">Disconnect</button>
-            {% else %}
-              <button class="btn btn-gold btn-sm" onclick="toggleSocial('Google', 'connect')">Connect Google</button>
-            {% endif %}
-          </div>
-
-          <!-- Facebook Account -->
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0;">
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-              <i class="fa-brands fa-facebook-f" style="font-size: 1.4rem; color: #1877f2;"></i>
-              <div>
-                <div style="font-weight: 600; color: #fff;">Facebook Account</div>
-                <div style="font-size: 0.75rem; color: var(--color-text-subtle);">
-                  {% if customer.facebook_id %}Connected ({{ customer.facebook_id }}){% else %}Not connected{% endif %}
-                </div>
-              </div>
-            </div>
-            {% if customer.facebook_id %}
-              <button class="btn btn-outline-white btn-sm" onclick="toggleSocial('Facebook', 'disconnect')">Disconnect</button>
-            {% else %}
-              <button class="btn btn-gold btn-sm" onclick="toggleSocial('Facebook', 'connect')">Connect Facebook</button>
-            {% endif %}
-          </div>
-        </div>
-
         <!-- Deactivate Account (Delete RUD) -->
         <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 1.5rem;">
           <h4 style="color: #ef4444; font-size: 1rem; margin-bottom: 0.4rem;">
@@ -230,21 +187,6 @@ document.getElementById('profile-update-form').addEventListener('submit', async 
     alert('Update error');
   }
 });
-
-async function toggleSocial(provider, action) {
-  try {
-    const res = await fetch('/api/profile/connect-social', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider, action })
-    });
-    const data = await res.json();
-    alert(data.message);
-    window.location.reload();
-  } catch (err) {
-    alert('Connection error');
-  }
-}
 
 async function deactivateAccount() {
   const confirmDel = confirm('Are you sure you want to deactivate your Quest customer account? This cannot be undone.');

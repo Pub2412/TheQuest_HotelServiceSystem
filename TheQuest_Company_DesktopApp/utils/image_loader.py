@@ -111,13 +111,13 @@ def get_logo_image(size: tuple = (160, 160)):
     )
 
 def get_icon_logo(size: tuple = (40, 40)):
-    """Loads small TQ icon from assets/imgs/logo/logo.png."""
+    """Loads the purple-backed TQ app icon from assets/imgs/logo/logo.png."""
     logo_path = "assets/imgs/logo/logo.png"
     return load_image(
         logo_path,
         size,
-        background=(255, 255, 255, 255),
-        background_radius=min(size) // 2,
+        background=(59, 24, 95, 255),
+        background_radius=max(4, min(size) // 5),
     )
 
 def get_hotel_map_image(max_size: tuple = (1200, 650)):

@@ -2,6 +2,56 @@
  * The Quest Hotel - Luxury Guest Mobile Application JavaScript
  */
 
+// Do not leave the WebView waiting forever when the local Flask server is busy or unavailable.
+const nativeFetch = window.fetch.bind(window);
+window.fetch = (input, init = {}) => {
+  if (init.signal) return nativeFetch(input, init);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  return nativeFetch(input, { ...init, signal: controller.signal })
+    .finally(() => clearTimeout(timeout));
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".mobile-modal").forEach(modal => {
+    modal.style.display = "none";
+  });
+  const toast = document.getElementById("mobileToast");
+  if (toast) toast.style.display = "none";
+});
+
+function navigateTab(link) {
+  if (!link || !link.href) return true;
+  window.stop();
+  window.location.replace(link.href);
+  return false;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const deferredImages = document.querySelectorAll("img[data-src]");
+  if (!deferredImages.length) return;
+
+  const loadImage = image => {
+    image.src = image.dataset.src;
+    image.removeAttribute("data-src");
+  };
+
+  if (!("IntersectionObserver" in window)) {
+    deferredImages.forEach(loadImage);
+    return;
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        loadImage(entry.target);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { rootMargin: "80px" });
+  deferredImages.forEach(image => observer.observe(image));
+});
+
 function showToast(message, isSuccess = true) {
   let toast = document.getElementById("mobileToast");
   if (!toast) {
@@ -21,23 +71,27 @@ function showToast(message, isSuccess = true) {
 function initCountdown(targetIso) {
   if (!targetIso) return;
   const targetDate = new Date(targetIso).getTime();
+  let timer;
+  const elements = {
+    days: document.getElementById("cd-days"),
+    hours: document.getElementById("cd-hours"),
+    minutes: document.getElementById("cd-mins"),
+    seconds: document.getElementById("cd-secs"),
+    badge: document.getElementById("stayCountdownBadge")
+  };
 
   function update() {
     const now = new Date().getTime();
     const distance = targetDate - now;
 
     if (distance <= 0) {
-      const d = document.getElementById("cd-days");
-      const h = document.getElementById("cd-hours");
-      const m = document.getElementById("cd-mins");
-      const s = document.getElementById("cd-secs");
-      if (d) d.innerText = "00";
-      if (h) h.innerText = "00";
-      if (m) m.innerText = "00";
-      if (s) s.innerText = "00";
-      const badge = document.getElementById("stayCountdownBadge");
-      if (badge) badge.innerText = "Checkout Due / Overdue";
-      return;
+      if (elements.days) elements.days.textContent = "00";
+      if (elements.hours) elements.hours.textContent = "00";
+      if (elements.minutes) elements.minutes.textContent = "00";
+      if (elements.seconds) elements.seconds.textContent = "00";
+      if (elements.badge) elements.badge.textContent = "Checkout Due / Overdue";
+      clearInterval(timer);
+      return true;
     }
 
     const days = Math.floor(distance / (1000 * 60 * 60 * 24));
@@ -45,22 +99,20 @@ function initCountdown(targetIso) {
     const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-    const d = document.getElementById("cd-days");
-    const h = document.getElementById("cd-hours");
-    const m = document.getElementById("cd-mins");
-    const s = document.getElementById("cd-secs");
-    if (d) d.innerText = String(days).padStart(2, "0");
-    if (h) h.innerText = String(hours).padStart(2, "0");
-    if (m) m.innerText = String(minutes).padStart(2, "0");
-    if (s) s.innerText = String(seconds).padStart(2, "0");
+    if (elements.days) elements.days.textContent = String(days).padStart(2, "0");
+    if (elements.hours) elements.hours.textContent = String(hours).padStart(2, "0");
+    if (elements.minutes) elements.minutes.textContent = String(minutes).padStart(2, "0");
+    if (elements.seconds) elements.seconds.textContent = String(seconds).padStart(2, "0");
   }
 
   update();
-  setInterval(update, 1000);
+  timer = setInterval(update, 1000);
 }
 
 // Digital Room Key & Door Unlock Logic
 async function unlockDoor(method, keyToken = null) {
+  if (unlockDoor.inProgress) return;
+  unlockDoor.inProgress = true;
   const wifiSelect = document.getElementById("wifiSelect");
   const wifiSSID = wifiSelect ? wifiSelect.value : "";
   const statusCard = document.getElementById("doorStatusCard");
@@ -99,12 +151,18 @@ async function unlockDoor(method, keyToken = null) {
       showToast(data.message, false);
     }
   } catch (err) {
-    showToast("Door unlock communication failed: " + err, false);
+    showToast(err.name === "AbortError"
+      ? "Door unlock timed out. Please try again."
+      : "Door unlock communication failed: " + err, false);
+  } finally {
+    unlockDoor.inProgress = false;
   }
 }
 
 // Web NFC API integration with tap simulation fallback
 async function handleNfcTap(keyToken) {
+  if (handleNfcTap.inProgress) return;
+  handleNfcTap.inProgress = true;
   if ("NDEFReader" in window) {
     try {
       const ndef = new NDEFReader();
@@ -117,13 +175,20 @@ async function handleNfcTap(keyToken) {
       setTimeout(() => {
         unlockDoor("nfc", keyToken);
       }, 600);
+      setTimeout(() => {
+        handleNfcTap.inProgress = false;
+      }, 1200);
       return;
     } catch (e) {
       console.log("Web NFC unavailable or denied, falling back to instant NFC proximity beam:", e);
     }
   }
   // Instant NFC Proximity Beam simulation
-  unlockDoor("nfc", keyToken);
+  try {
+    await unlockDoor("nfc", keyToken);
+  } finally {
+    handleNfcTap.inProgress = false;
+  }
 }
 
 // Modal Sheet Helpers
@@ -136,4 +201,3 @@ function closeModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) modal.style.display = "none";
 }
-

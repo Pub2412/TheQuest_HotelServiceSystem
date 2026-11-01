@@ -26,3 +26,6 @@ Created mobile port of Quest Company Application
 
 25/10/2026
 Fixed mobile port of Quest Company Application now uses gradle and kotlin on a flask server.
+
+31/10/2026
+Created mobile port of Quest Customer Application
