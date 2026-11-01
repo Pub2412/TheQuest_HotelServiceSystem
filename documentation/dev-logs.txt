@@ -29,3 +29,17 @@ Fixed mobile port of Quest Company Application now uses gradle and kotlin on a f
 
 31/10/2026
 Created mobile port of Quest Customer Application
+
+01/11/2026
+Updated customer and company mobile app branding with purple splash backgrounds,
+logo-based Android icons, and the requested `logotitle.png` splash artwork.
+Removed staff preset login hints from the Company Mobile App.
+Removed social account login and linking UI from the customer website and
+customer mobile app.
+Improved mobile navigation responsiveness, deferred service images, protected
+extension submissions from duplicates, and fixed overdue-stay extension
+countdowns.
+Added purple-backed Windows icon support for the Company Desktop App, including
+the `assets/imgs/logo/logo.ico` file and Windows taskbar AppUserModel identity.
+Expanded the root README with project structure, setup, run commands, Android
+deployment notes, shared database guidance, and branding documentation.
