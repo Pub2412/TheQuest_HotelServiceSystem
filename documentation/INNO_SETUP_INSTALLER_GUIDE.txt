@@ -1,0 +1,333 @@
+THE QUEST HOTEL SERVICE SYSTEM
+INNO SETUP INSTALLER GUIDE
+========================================
+
+This guide explains how to create an installer that lets the user choose
+which parts of The Quest Suite to install.
+
+The recommended approach is to build each Python application as a standalone
+EXE first. This means the target computer does not need Python or pip for the
+desktop and web applications.
+
+
+1. INSTALLER COMPONENTS
+------------------------
+
+Suggested optional components:
+
+  [x] Company Desktop App
+  [x] Smart Lock Simulator
+  [x] Company Mobile App
+  [x] Customer Mobile App
+  [x] Customer Website
+  [x] SQLite Command-Line Tools
+  [x] Android SDK and Pixel 6 Emulator
+
+The Android SDK and Pixel 6 emulator are optional because they can require
+several gigabytes of storage and hardware virtualization support.
+
+
+2. PREPARE THE FILES
+--------------------
+
+Create a separate staging folder outside the source folders:
+
+  installer-files\
+    TheQuestDesktop.exe
+    SmartLockSimulator.exe
+    CompanyMobileServer.exe
+    CustomerMobileServer.exe
+    CustomerWebsite.exe
+    assets\
+      imgs\
+        logo\
+          logo.png
+          logotitle.png
+          logo.ico
+    database\
+      hotel_service.db
+    sqlite\
+      sqlite3.exe
+      sqldiff.exe
+      sqlite3_analyzer.exe
+    android\
+      TheQuest_Company.apk
+      TheQuest_Customer.apk
+      sdk\
+
+Do not place passwords, credentials, private keys, or production database
+copies into the installer unless they are intentionally required.
+
+
+3. BUILD PYTHON EXE FILES
+-------------------------
+
+Install PyInstaller in the virtual environment for each Python application:
+
+  python -m pip install pyinstaller
+
+Example for the Company Desktop App:
+
+  cd TheQuest_Company_DesktopApp
+  pyinstaller --noconfirm --clean --windowed ^
+    --name TheQuestDesktop ^
+    --icon ..\assets\imgs\logo\logo.ico ^
+    --add-data "..\assets;assets" ^
+    --add-data "..\database;database" ^
+    main.py
+
+Copy the resulting EXE from dist\TheQuestDesktop\ to installer-files\.
+
+Build the Smart Lock Simulator similarly:
+
+  pyinstaller --noconfirm --clean --windowed ^
+    --name SmartLockSimulator ^
+    --icon ..\assets\imgs\logo\logo.ico ^
+    --add-data "..\assets;assets" ^
+    --add-data "..\database;database" ^
+    ..\gui.py
+
+For Flask applications, create launcher programs that start the local server
+and open the browser. Package each launcher with its templates, static files,
+backend modules, assets, and database files. Use a different local port for
+each server when more than one server may run at the same time.
+
+Important: test every EXE on a computer that does not have the development
+virtual environment installed before building the final installer.
+
+
+4. CREATE THE INNO SETUP SCRIPT
+--------------------------------
+
+Open Inno Setup Compiler and choose:
+
+  File > New
+  Create a new script using the Script Wizard
+
+The wizard can create the basic script. Replace or extend the generated script
+with the following structure:
+
+  [Setup]
+  AppName=The Quest Hotel Service System
+  AppVersion=1.0.0
+  DefaultDirName={autopf}\The Quest Hotel
+  DefaultGroupName=The Quest Hotel
+  OutputBaseFilename=TheQuestSetup
+  OutputDir=installer-output
+  ArchitecturesInstallIn64BitMode=x64
+  PrivilegesRequired=admin
+  UninstallDisplayIcon={app}\assets\imgs\logo\logo.ico
+
+  [Types]
+  Name: "full"; Description: "Full installation"
+  Name: "custom"; Description: "Custom installation"; Flags: iscustom
+
+  [Components]
+  Name: "desktop"; Description: "Company Desktop App"; Types: full custom
+  Name: "lock"; Description: "Smart Lock Simulator"; Types: full custom
+  Name: "companymobile"; Description: "Company Mobile App"; Types: full custom
+  Name: "customermobile"; Description: "Customer Mobile App"; Types: full custom
+  Name: "website"; Description: "Customer Website"; Types: full custom
+  Name: "sqlite"; Description: "SQLite Tools"; Types: full custom
+  Name: "android"; Description: "Android SDK and Pixel 6 Emulator"; Types: full custom
+
+
+5. COPY THE APPLICATION FILES
+-----------------------------
+
+Add this section to the Inno Setup script:
+
+  [Files]
+  Source: "installer-files\TheQuestDesktop.exe"; DestDir: "{app}\Desktop"; Components: desktop
+  Source: "installer-files\SmartLockSimulator.exe"; DestDir: "{app}\SmartLock"; Components: lock
+  Source: "installer-files\CompanyMobileServer.exe"; DestDir: "{app}\CompanyMobile"; Components: companymobile
+  Source: "installer-files\CustomerMobileServer.exe"; DestDir: "{app}\CustomerMobile"; Components: customermobile
+  Source: "installer-files\CustomerWebsite.exe"; DestDir: "{app}\CustomerWebsite"; Components: website
+
+  Source: "installer-files\assets\*"; DestDir: "{app}\assets"; \
+    Flags: recursesubdirs createallsubdirs
+
+  Source: "installer-files\database\*"; DestDir: "{commonappdata}\The Quest Hotel\database"; \
+    Flags: recursesubdirs createallsubdirs
+
+  Source: "installer-files\sqlite\*"; DestDir: "{app}\sqlite"; \
+    Flags: recursesubdirs createallsubdirs; Components: sqlite
+
+  Source: "installer-files\android\*"; DestDir: "{app}\android"; \
+    Flags: recursesubdirs createallsubdirs; Components: android
+
+Use {commonappdata} for writable databases and logs. Program Files should be
+treated as read-only by the applications.
+
+
+6. CREATE START MENU AND DESKTOP SHORTCUTS
+------------------------------------------
+
+Add this section:
+
+  [Icons]
+  Name: "{group}\The Quest Desktop App"; \
+    Filename: "{app}\Desktop\TheQuestDesktop.exe"; \
+    WorkingDir: "{app}\Desktop"; \
+    IconFilename: "{app}\assets\imgs\logo\logo.ico"; \
+    Components: desktop
+
+  Name: "{group}\Smart Lock Simulator"; \
+    Filename: "{app}\SmartLock\SmartLockSimulator.exe"; \
+    WorkingDir: "{app}\SmartLock"; \
+    IconFilename: "{app}\assets\imgs\logo\logo.ico"; \
+    Components: lock
+
+  Name: "{group}\Company Mobile App"; \
+    Filename: "{app}\CompanyMobile\CompanyMobileServer.exe"; \
+    WorkingDir: "{app}\CompanyMobile"; \
+    IconFilename: "{app}\assets\imgs\logo\logo.ico"; \
+    Components: companymobile
+
+  Name: "{group}\Customer Mobile App"; \
+    Filename: "{app}\CustomerMobile\CustomerMobileServer.exe"; \
+    WorkingDir: "{app}\CustomerMobile"; \
+    IconFilename: "{app}\assets\imgs\logo\logo.ico"; \
+    Components: customermobile
+
+  Name: "{group}\Customer Website"; \
+    Filename: "{app}\CustomerWebsite\CustomerWebsite.exe"; \
+    WorkingDir: "{app}\CustomerWebsite"; \
+    IconFilename: "{app}\assets\imgs\logo\logo.ico"; \
+    Components: website
+
+To also create desktop shortcuts, duplicate the entries and change:
+
+  {group}
+
+to:
+
+  {commondesktop}
+
+
+7. PYTHON INSTALLATION
+----------------------
+
+If all Python applications are packaged with PyInstaller, Python does not need
+to be installed on the target computer. Python and the application requirements
+are already bundled into the EXE files.
+
+If you distribute source code instead, download the official Python installer
+and run it from Inno Setup. Then install each requirements.txt file. This is
+less reliable than distributing PyInstaller builds because it depends on
+network access, Python versions, and package compatibility.
+
+Recommended: use PyInstaller and do not install Python on the target computer.
+
+
+8. SQLITE INSTALLATION
+----------------------
+
+Python includes the sqlite3 module, so a separate SQLite installation is not
+required by the Python applications.
+
+If the user selects SQLite Tools, copy the SQLite command-line tools using the
+sqlite component. The installer can then provide:
+
+  {app}\sqlite\sqlite3.exe
+  {app}\sqlite\sqldiff.exe
+  {app}\sqlite\sqlite3_analyzer.exe
+
+
+9. ANDROID SDK AND PIXEL 6 EMULATOR
+-----------------------------------
+
+This is the largest and most difficult optional component. It requires:
+
+  - Android SDK command-line tools
+  - Platform Tools
+  - Android Emulator
+  - Android platform 35
+  - A compatible Android 35 system image
+  - Hardware virtualization through WHPX, Hyper-V, or a similar feature
+
+If bundling the SDK, copy the complete tested SDK folder into the android
+component. If downloading during installation, the installer must run
+sdkmanager and accept licenses, which requires network access.
+
+Typical commands after installation are:
+
+  sdkmanager "platform-tools" "emulator" "platforms;android-35" ^
+    "system-images;android-35;google_apis;x86_64"
+
+  avdmanager create avd --name "TheQuest_Pixel_6" ^
+    --package "system-images;android-35;google_apis;x86_64" ^
+    --device "pixel_6"
+
+The Pixel 6 emulator may fail if CPU virtualization is disabled in BIOS or
+Windows virtualization support is unavailable. Test this component separately
+before adding it to the final installer.
+
+
+10. OPTIONAL PREREQUISITE CHECKS
+--------------------------------
+
+Inno Setup can check for existing software in its [Code] section, but do not
+silently replace working installations. A proper prerequisite workflow should:
+
+  1. Detect the installed tool or runtime.
+  2. Show what is missing.
+  3. Ask the user whether to install it.
+  4. Run the prerequisite installer or show an actionable error.
+  5. Continue only after a successful installation.
+
+Use the [Run] section for bundled prerequisite installers:
+
+  [Run]
+  Filename: "{tmp}\python-installer.exe"; \
+    Parameters: "/quiet InstallAllUsers=1 PrependPath=1"; \
+    StatusMsg: "Installing Python..."; \
+    Flags: waituntilterminated
+
+Only add this if the source-code distribution actually needs Python.
+
+
+11. COMPILE AND TEST
+--------------------
+
+In Inno Setup Compiler:
+
+  1. Open the .iss file.
+  2. Select Build > Compile.
+  3. Find TheQuestSetup.exe in the configured OutputDir.
+  4. Install it on a clean Windows test computer.
+  5. Select each component combination.
+  6. Confirm every shortcut uses the Quest icon.
+  7. Start each selected application.
+  8. Confirm the shared database is writable.
+  9. Test uninstall and verify that user data is not accidentally deleted.
+
+Test at least:
+
+  - Desktop App only
+  - Desktop App + Smart Lock Simulator
+  - Customer Website only
+  - All Python applications
+  - Android tools with and without virtualization enabled
+
+
+12. PRACTICAL RELEASE PLAN
+--------------------------
+
+For a manageable first release, use two installers:
+
+  TheQuestSetup.exe
+    Desktop App
+    Smart Lock Simulator
+    Customer Website
+    Optional SQLite Tools
+
+  TheQuestAndroidSetup.exe
+    Android SDK
+    Pixel 6 Emulator
+    Company Mobile APK
+    Customer Mobile APK
+    ADB launcher
+
+This keeps the normal installer small while allowing users who need Android
+development or demonstrations to install the much larger emulator package.
